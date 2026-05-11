@@ -1,0 +1,124 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # Base de Datos Compartida
+  # ============================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: plataforma-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_INITDB_ARGS: "-c shared_buffers=256MB"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - plataforma-network
+
+  # ============================================
+  # Microservicio: MS-USUARIOS
+  # ============================================
+  ms-usuarios:
+    build:
+      context: ./ms-usuarios
+      dockerfile: Dockerfile
+    container_name: ms-usuarios
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ms_usuarios
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_APPLICATION_NAME: ms-usuarios
+      SERVER_PORT: 8081
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - plataforma-network
+    restart: unless-stopped
+
+  # ============================================
+  # Microservicio: MS-MAPEO
+  # ============================================
+  ms-mapeo:
+    build:
+      context: ./ms-mapeo
+      dockerfile: Dockerfile
+    container_name: ms-mapeo
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ms_mapeo
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_APPLICATION_NAME: ms-mapeo
+      SERVER_PORT: 8082
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - plataforma-network
+    restart: unless-stopped
+
+  # ============================================
+  # Servicio Demo (Opcional)
+  # ============================================
+  demo:
+    build:
+      context: ./demo
+      dockerfile: Dockerfile
+    container_name: demo-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/demo_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_APPLICATION_NAME: demo
+      SERVER_PORT: 8083
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - plataforma-network
+    restart: unless-stopped
+
+  # ============================================
+  # Herramientas Opcionales
+  # ============================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - plataforma-network
+    restart: unless-stopped
+
+# ============================================
+# Volúmenes
+# ============================================
+volumes:
+  postgres_data:
+
+# ============================================
+# Redes
+# ============================================
+networks:
+  plataforma-network:
+    driver: bridge
