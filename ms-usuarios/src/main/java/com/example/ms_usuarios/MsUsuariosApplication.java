@@ -1,13 +1,13 @@
-package com.example.demo;
+package com.example.ms_usuarios;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class DemoApplication {
+public class MsUsuariosApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(DemoApplication.class, args);
+		SpringApplication.run(MsUsuariosApplication.class, args);
 	}
 
 }
