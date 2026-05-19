@@ -9,13 +9,14 @@ spring:
       mvc:
         routes:
           - id: ms-usuarios
-            uri: http://krakend:8080
+            uri: http://ms-usuarios:8081
             predicates:
               - Path=/api/usuarios/**
           - id: ms-mapeo
-            uri: http://krakend:8080
+            uri: http://ms-mapeo:8082
             predicates:
               - Path=/api/mapeo/**
+
 
 # Resilience4j
 resilience4j.circuitbreaker:

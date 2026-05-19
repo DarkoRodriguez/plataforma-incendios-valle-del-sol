@@ -36,12 +36,14 @@ services:
       SPRING_APPLICATION_NAME: ms-bff
       SERVER_PORT: 8080
     ports:
-      - "8080:8080"
+      - "8090:8080"
     depends_on:
-      - krakend
+      - ms-usuarios
+      - ms-mapeo
     networks:
       - plataforma-network
     restart: unless-stopped
+
 
   # ============================================
   # Microservicio: MS-USUARIOS
@@ -135,13 +137,13 @@ services:
     volumes:
       - ./krakend:/etc/krakend
     ports:
-      - "8000:8080"
+      - "8080:8080"
     depends_on:
-      - ms-usuarios
-      - ms-mapeo
+      - ms-bff
     networks:
       - plataforma-network
     restart: unless-stopped
+
 
   # ============================================
   # Herramientas Opcionales

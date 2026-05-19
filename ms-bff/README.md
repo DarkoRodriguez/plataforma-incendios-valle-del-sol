@@ -1,44 +1,46 @@
 # MS-BFF (Backend For Frontend Component)
 ## Pasarela Centralizadora y Orquestadora de Servicios - Comuna Valle del Sol
 
-El microservicio **`ms-bff`** actúa como la pasarela y único punto de contacto expuesto externamente al cliente (frontend). Construido sobre **Spring Cloud Gateway**, implementa políticas de resiliencia avanzadas mediante disyuntores de fallo (**Circuit Breakers**) y centraliza de forma segura la gestión de intercambio de recursos de origen cruzado (CORS), aislando la infraestructura de microservicios internos.
+El microservicio **`ms-bff`** actúa como la pasarela orquestadora de negocio interna dentro del ecosistema de microservicios de la Municipalidad Valle del Sol. Construido sobre **Spring Boot** y **Spring Cloud Gateway**, implementa políticas de resiliencia avanzadas mediante disyuntores de fallo (**Circuit Breakers**) y actúa como el concentrador e integrador lógico entre el API Gateway frontal (KrakenD) y los microservicios funcionales.
 
 ---
 
 ## 1. Arquitectura y Patrones de Diseño
 
-Este componente adopta patrones clave de diseño de sistemas distribuidos para garantizar la seguridad y resiliencia:
+Este componente adopta patrones clave de diseño de sistemas distribuidos para garantizar la seguridad, robustez y resiliencia:
 
 1. **Patrón Backend For Frontend (BFF):**
-   - Aísla al frontend de la complejidad del mapa de red de los microservicios internos.
-   - Enruta de manera uniforme peticiones hacia los endpoints expuestos mediante el gateway de KrakenD e internos.
+   - Recibe las solicitudes limpias y autorizadas desde el API Gateway (KrakenD).
+   - Centraliza y simplifica el direccionamiento hacia los microservicios dedicados del ecosistema.
 2. **Patrón Circuit Breaker (Disyuntor) con Resilience4j:**
-   - Previene fallos en cascada. Si un microservicio decae en su rendimiento o colapsa temporalmente, el disyuntor entra en estado "Abierto" bloqueando peticiones adicionales y respondiendo de forma segura antes de sobrecargar la red municipal.
-3. **Filtro Centralizado de Origen Cruzado (CORS Filter):**
-   - Evita la duplicación de cabeceras CORS en controladores individuales (lo que provocaría bloqueos a nivel de navegador) centralizando políticas de aceptación de orígenes (`*`), métodos HTTP (`GET`, `POST`, `PUT`, `DELETE`, `OPTIONS`) y cabeceras personalizadas (`Authorization`, `Content-Type`).
+   - Previene fallos en cascada. Si un microservicio decae en su rendimiento o colapsa temporalmente (por ejemplo, `ms-mapeo` bajo carga pesada), el disyuntor entra en estado "Abierto" bloqueando peticiones adicionales y respondiendo de forma segura antes de sobrecargar la red municipal.
 
 ---
 
-## 2. Diagrama de Arquitectura del BFF
+## 2. Diagrama de Arquitectura del BFF (Flujo Invertido)
 
-El siguiente diagrama modela cómo fluye la petición HTTP desde la interfaz externa pasando por la pasarela de seguridad del BFF y su ruteo asíncrono y síncrono interno:
+El siguiente diagrama modela cómo fluye la petición HTTP desde la interfaz externa pasando por la pasarela de seguridad del API Gateway (KrakenD), la pasarela de resiliencia del BFF y su enrutamiento hacia los microservicios:
 
 ```mermaid
 graph TD
-    Client[Cliente / Navegador Web] -->|HTTP Request| BFF[ms-bff:8080 - Pasarela BFF]
+    Client[Cliente / Navegador Web] -->|HTTP Request| KrakenD[krakend:8080 - API Gateway Frontal]
     
-    subgraph BFF_Gateway [Backend For Frontend]
-        BFF --> CORS[Filtro CORS Centralizado]
-        CORS --> CB[Circuit Breaker / Resilience4j]
+    subgraph KrakenD_Layer [Pasarela Fronteriza]
+        KrakenD --> CORS_KrakenD[CORS & Filtro de Encabezados]
+    end
+    
+    CORS_KrakenD -->|Enrutamiento Interno| BFF[ms-bff:8080 - Backend For Frontend]
+    
+    subgraph BFF_Gateway [Orquestador de Negocio]
+        BFF --> CB[Circuit Breaker / Resilience4j]
         CB --> Route[Gestor de Rutas Activo]
     end
 
-    Route -->|/api/usuarios/**| Gateway[krakend:8080 - API Gateway]
-    Route -->|/api/mapeo/**| Gateway
-    Gateway --> MS_Usuarios[ms-usuarios:8081]
-    Gateway --> MS_Mapeo[ms-mapeo:8082]
+    Route -->|/api/usuarios/**| MS_Usuarios[ms-usuarios:8081]
+    Route -->|/api/mapeo/**| MS_Mapeo[ms-mapeo:8082]
 
-    style BFF fill:#1e272e,stroke:#34e7e4,stroke-width:2px,color:#fff
+    style KrakenD fill:#1e272e,stroke:#34e7e4,stroke-width:2px,color:#fff
+    style BFF fill:#2f3542,stroke:#ffa502,stroke-width:1.5px,color:#fff
     style CB fill:#ff4757,stroke:#ff6b81,stroke-width:1px,color:#fff
     style Route fill:#2f3542,stroke:#2ed573,stroke-width:1px,color:#fff
 ```
@@ -73,7 +75,7 @@ graph TD
    ```bash
    mvn spring-boot:run
    ```
-4. El servicio estará activo y escuchando en el puerto: **`8080`**.
+4. El servicio estará activo y escuchando en el puerto interno: **`8080`** (Exhibido externamente en Docker en el puerto `8090`).
 
 ### Configuración del Disyuntor (`application.yml`)
 El comportamiento del Circuit Breaker se define de la siguiente manera:
@@ -85,7 +87,7 @@ El comportamiento del Circuit Breaker se define de la siguiente manera:
 
 ## 5. Mappings y Rutas del BFF
 
-El BFF expone e intercepta los siguientes patrones de rutas, mapeándolos dinámicamente hacia KrakenD para su enrutamiento final aguas abajo:
+El BFF expone e intercepta los siguientes patrones de rutas provenientes de KrakenD y los redirecciona de manera directa a los microservicios correspondientes:
 
-- **/api/usuarios/\*\*** $\rightarrow$ Redirige al API Gateway (`http://krakend:8080`) para autenticación y perfiles de usuarios.
-- **/api/mapeo/\*\*** $\rightarrow$ Redirige al API Gateway (`http://krakend:8080`) para reportes y visualización geográfica.
+- **/api/usuarios/\*\*** $\rightarrow$ Redirige directamente al microservicio de usuarios (`http://ms-usuarios:8081`) para autenticación, registro y perfiles de usuarios.
+- **/api/mapeo/\*\*** $\rightarrow$ Redirige directamente al microservicio de mapeo (`http://ms-mapeo:8082`) para reportes y visualización geográfica.
