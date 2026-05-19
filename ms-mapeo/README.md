@@ -21,29 +21,8 @@ Este microservicio implementa patrones específicos de la ingeniería de softwar
 
 ---
 
-## 2. Diagrama del Microservicio de Mapeo
 
-El siguiente diagrama detalla la arquitectura de capas interna del componente de mapeo y su persistencia espacial con la extensión PostGIS:
-
-```mermaid
-graph TD
-    Client[BFF / Pasarela Central] -->|HTTP Request| Controller[ReporteIncendioController.java - Controlador]
-    
-    subgraph ms-mapeo [Capas del Microservicio]
-        Controller --> Service[ReporteIncendioService.java - Servicio Mapeo]
-        Service --> Repository[ReporteIncendioRepository.java - JPA Repository]
-        Controller --> JwtUtil[JwtUtil.java - Decodificador JWT local]
-    end
-
-    Repository -->|JTS Point Mapping| DB[(PostgreSQL: ms_mapeo + PostGIS)]
-
-    style ms-mapeo fill:#1e272e,stroke:#34e7e4,stroke-width:2px,color:#fff
-    style DB fill:#2f3542,stroke:#ff4757,stroke-width:1px,color:#fff
-```
-
----
-
-## 3. Tecnologías y Librerías Clave
+## 2. Tecnologías y Librerías Clave
 
 - **Spring Boot 3.3.x:** Base estructural del servicio.
 - **Hibernate Spatial / JTS Core:** Mapeo y manipulación nativa de geometrías espaciales.
@@ -52,7 +31,7 @@ graph TD
 
 ---
 
-## 4. Configuración y Setup del Servicio
+## 3. Configuración y Setup del Servicio
 
 ### Requisitos previos
 - **Java 21 / 25 LTS** instalado.
@@ -86,7 +65,7 @@ graph TD
 
 ---
 
-## 5. Detalles de Endpoints de la API
+## 4. Detalles de Endpoints de la API
 
 El microservicio expone de forma directa los siguientes endpoints:
 

@@ -21,35 +21,9 @@ El frontend implementa una serie de patrones de diseño específicos para garant
 
 ---
 
-## 2. Diagrama de Componentes de Software
 
-El siguiente diagrama detalla la interacción lógica y flujo de datos entre las distintas piezas del frontend y el pasadizo central hacia los microservicios:
 
-```mermaid
-graph TD
-    subgraph Frontend [mfe-mapeo - React App]
-        App[App.jsx - Contenedor Principal] --> Navbar[Navbar.jsx - Presentador de Sesión]
-        App --> MapView[MapView.jsx - Presentador de Mapa Leaflet]
-        App --> AuthModals[AuthModals.jsx - Formularios Login/Registro]
-        App --> ProfileModal[ProfileModal.jsx - Formulario Editar Perfil]
-        App --> ApiClient[api.js - Axios Client & JWT Interceptor]
-    end
-
-    subgraph Backend_Gateways [Infraestructura & Puertas]
-        ApiClient --> BFF[ms-bff:8080 - Backend For Frontend]
-        BFF --> KrakenD[krakend:8000 - API Gateway]
-    end
-    
-    style App fill:#1e272e,stroke:#34e7e4,stroke-width:2px,color:#fff
-    style MapView fill:#2f3542,stroke:#ff4757,stroke-width:1px,color:#fff
-    style Navbar fill:#2f3542,stroke:#2ed573,stroke-width:1px,color:#fff
-    style ProfileModal fill:#2f3542,stroke:#ffa502,stroke-width:1px,color:#fff
-    style ApiClient fill:#1e272e,stroke:#34e7e4,stroke-width:1px,color:#fff
-```
-
----
-
-## 3. Tecnologías y Librerías Clave
+## 2. Tecnologías y Librerías Clave
 
 - **React 18 & Vite:** Entorno de compilación ultra veloz y servidor de desarrollo ágil.
 - **Leaflet & react-leaflet (1.9.4):** Motor de mapas de código abierto integrado con capas cartográficas base de **OpenStreetMap**.
@@ -58,7 +32,7 @@ graph TD
 
 ---
 
-## 4. Configuración y Setup del Servicio
+## 3. Configuración y Setup del Servicio
 
 ### Requisitos previos
 - **Node.js:** Versión 20.x LTS ("Iron").
@@ -84,7 +58,7 @@ Por defecto, la API se conecta al BFF central en `http://localhost:8080/api` med
 
 ---
 
-## 5. Descripción del Flujo y Características de la UI
+## 4. Descripción del Flujo y Características de la UI
 
 - **Mapa de Pantalla Completa:** Al abrir la aplicación, el usuario se encuentra con un mapa Leaflet interactivo cargado con todos los pines activos georreferenciados mediante sus coordenadas espaciales.
 - **Pines por Código de Colores:** Los focos se visualizan dinámicamente según su estado:

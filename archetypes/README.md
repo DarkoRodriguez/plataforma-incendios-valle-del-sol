@@ -3,7 +3,7 @@
 Este arquetipo de Maven permite generar nuevos microservicios con la estructura y configuración base estandarizada para la plataforma de la Municipalidad Valle del Sol.
 
 ## Características incluidas:
-- Spring Boot 4.0.6 (o superior según configuración).
+- Spring Boot 3.3.4 (o superior según configuración).
 - Java 25.
 - Dependencias base: WebMVC, Data JPA, Validation.
 - Base de Datos: PostgreSQL.

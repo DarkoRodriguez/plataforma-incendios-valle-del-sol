@@ -22,33 +22,7 @@ Este microservicio se fundamenta en sólidos patrones de diseño de software emp
 
 ---
 
-## 2. Diagrama del Microservicio de Usuarios
-
-El siguiente diagrama detalla la arquitectura de capas interna del componente y su conexión con la base de datos de PostgreSQL administrada por Flyway:
-
-```mermaid
-graph TD
-    Client[KrakenD Gateway] -->|HTTP Request| Controller[UserController.java - Controlador REST]
-    
-    subgraph ms-usuarios [Capas del Microservicio]
-        Controller --> AuthService[AuthService.java - Servicio Auth]
-        Controller --> UserService[UserService.java - Servicio Usuarios]
-        AuthService --> UserRepository[UserRepository.java - JPA Repository]
-        UserService --> UserRepository
-        Controller --> JwtUtil[JwtUtil.java - Generación & Validación JWT]
-    end
-
-    UserRepository -->|JPA / JDBC| DB[(PostgreSQL: ms_usuarios)]
-    Flyway[Flyway Migrations] -->|Esquemas V1__init| DB
-
-    style ms-usuarios fill:#1e272e,stroke:#34e7e4,stroke-width:2px,color:#fff
-    style DB fill:#2f3542,stroke:#ffa502,stroke-width:1px,color:#fff
-    style Flyway fill:#2f3542,stroke:#2ed573,stroke-width:1px,color:#fff
-```
-
----
-
-## 3. Tecnologías y Librerías Clave
+## 2. Tecnologías y Librerías Clave
 
 - **Spring Boot 3.3.x:** Framework de desarrollo principal.
 - **Spring Data JPA:** Abstracción y operaciones de persistencia relacional.
@@ -58,7 +32,7 @@ graph TD
 
 ---
 
-## 4. Configuración y Setup del Servicio
+## 3. Configuración y Setup del Servicio
 
 ### Requisitos previos
 - **Java 21 / 25 LTS** instalado.
@@ -86,7 +60,7 @@ graph TD
 
 ---
 
-## 5. Detalles de Endpoints de la API
+## 4. Detalles de Endpoints de la API
 
 El microservicio expone de forma directa los siguientes endpoints:
 
@@ -98,11 +72,3 @@ El microservicio expone de forma directa los siguientes endpoints:
 | **PUT** | `/api/usuarios/users/{id}` | Requerida (Bearer) | Actualiza el perfil de forma segura (Solo Dueño o Administradores). |
 
 ---
-
-## 6. Pruebas Unitarias
-
-Para verificar la robustez del componente y la cobertura del código:
-```bash
-mvn test
-```
-Los tests verifican de manera unitaria e integrada los servicios de autenticación y de obtención de perfiles de usuario.
