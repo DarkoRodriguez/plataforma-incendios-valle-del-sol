@@ -1,31 +1,123 @@
-import React from 'react';
-import { useReportes } from './hooks/useReportes';
+import React, { useState, useEffect } from 'react';
+import { Navbar } from './components/Navbar';
 import { MapView } from './components/MapView';
+import { AuthModals } from './components/AuthModals';
+import { ReportModal } from './components/ReportModal';
+import { ProfileModal } from './components/ProfileModal';
+import api from './api';
 
 function App() {
-    const { reportes, loading, error, addReporte } = useReportes();
+  const [reportes, setReportes] = useState([]);
+  const [authModal, setAuthModal] = useState(null); // 'login' | 'register' | null
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [isReporting, setIsReporting] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
-    return (
-        <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
-            <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-                <header style={{ marginBottom: '20px', textAlign: 'center', color: '#d32f2f' }}>
-                    <h1>Municipalidad Valle del Sol</h1>
-                    <h2>Sistema de Prevención de Incendios</h2>
-                </header>
+  const fetchReportes = async () => {
+    try {
+      const res = await api.get('/mapeo/reportes');
+      setReportes(res.data);
+    } catch (err) {
+      console.error("Error fetching reports", err);
+    }
+  };
 
-                {error && (
-                    <div style={{ backgroundColor: '#ffebee', color: '#c62828', padding: '10px', borderRadius: '4px', marginBottom: '15px' }}>
-                        Error: {error}
-                    </div>
-                )}
+  useEffect(() => {
+    fetchReportes();
 
-                <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                    <MapView reportes={reportes} onReportar={addReporte} />
-                    {loading && <p style={{ textAlign: 'center', marginTop: '10px' }}>Cargando reportes...</p>}
-                </div>
-            </div>
-        </div>
-    );
+    const checkUser = () => {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        setCurrentUser(JSON.parse(storedUser));
+      } else {
+        setCurrentUser(null);
+      }
+    };
+    
+    checkUser();
+    window.addEventListener('auth-change', checkUser);
+    return () => window.removeEventListener('auth-change', checkUser);
+  }, []);
+
+  const handleLocationSelected = (latlng) => {
+    setSelectedLocation(latlng);
+  };
+
+  const handleReportSuccess = (newReport) => {
+    setReportes([...reportes, newReport]);
+    setSelectedLocation(null);
+    setIsReporting(false);
+  };
+
+  const handleAuthSuccess = () => {
+    setAuthModal(null);
+    window.dispatchEvent(new Event('auth-change'));
+  };
+
+  const handleProfileUpdateSuccess = (updatedUser) => {
+    setCurrentUser(updatedUser);
+    setProfileOpen(false);
+    window.dispatchEvent(new Event('auth-change'));
+  };
+
+  const handleStatusChange = async (reportId, newStatus) => {
+    try {
+      await api.put(`/mapeo/reportes/${reportId}/estado`, { estado: newStatus });
+      // Update locally
+      setReportes(prev => prev.map(r => r.id === reportId ? { ...r, estado: newStatus } : r));
+    } catch (err) {
+      console.error("Error updating fire status", err);
+      alert("No se pudo actualizar el estado del incendio. Verifica tus permisos de Brigadista.");
+    }
+  };
+
+  return (
+    <>
+      <Navbar 
+        onLoginClick={() => setAuthModal('login')}
+        onRegisterClick={() => setAuthModal('register')}
+        onEditProfileClick={() => setProfileOpen(true)}
+        isReporting={isReporting}
+        setIsReporting={(val) => {
+          setIsReporting(val);
+          if (!val) setSelectedLocation(null);
+        }}
+      />
+      
+      <MapView 
+        reportes={reportes} 
+        isReporting={isReporting} 
+        onLocationSelected={handleLocationSelected} 
+        currentUser={currentUser}
+        onStatusChange={handleStatusChange}
+      />
+
+      {authModal && (
+        <AuthModals 
+          type={authModal} 
+          onClose={() => setAuthModal(null)} 
+          onAuthSuccess={handleAuthSuccess}
+        />
+      )}
+
+      {profileOpen && currentUser && (
+        <ProfileModal 
+          user={currentUser}
+          onClose={() => setProfileOpen(false)}
+          onUpdateSuccess={handleProfileUpdateSuccess}
+        />
+      )}
+
+      {selectedLocation && (
+        <ReportModal 
+          location={selectedLocation} 
+          onClose={() => setSelectedLocation(null)}
+          onReportSuccess={handleReportSuccess}
+        />
+      )}
+    </>
+  );
 }
 
 export default App;

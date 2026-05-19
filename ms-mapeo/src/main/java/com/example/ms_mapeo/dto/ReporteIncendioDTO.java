@@ -11,4 +11,5 @@ public class ReporteIncendioDTO {
     private double latitud;
     private double longitud;
     private String fechaReporte;
+    private Long usuarioId;
 }

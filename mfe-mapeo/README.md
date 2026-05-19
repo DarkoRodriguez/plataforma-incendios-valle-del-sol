@@ -1,26 +1,96 @@
-# MFE-Mapeo (Frontend)
+# MFE-Mapeo (Frontend Component - Micro-Frontend)
+## Plataforma de Visualización y Detección de Focos de Incendio - Comuna Valle del Sol
 
-Este es el micro-frontend (MFE) encargado de la visualización del mapa y el reporte de incendios para la Municipalidad Valle del Sol. Está construido utilizando React, Vite y react-leaflet.
+Este componente representa la interfaz de usuario de la plataforma, diseñada bajo un esquema responsivo y optimizado ("Web-First") para permitir un reporte veloz y sin barreras en situaciones de emergencia. Consiste en una aplicación moderna en React SPA empaquetada e integrada que provee visualización geográfica interactiva y control de accesos basados en roles.
 
-## Requisitos previos
-- Node.js 20.x LTS
-- NPM
+---
 
-## Instalación y Ejecución
+## 1. Arquitectura y Patrones de Diseño
 
-1. Navegar al directorio `mfe-mapeo`.
-2. Instalar las dependencias:
+El frontend implementa una serie de patrones de diseño específicos para garantizar la reactividad, modularidad y fácil mantenibilidad de sus vistas:
+
+1. **Patrón Container/Presenter:** 
+   - **`App.jsx`** actúa como el contenedor principal de datos y estados (carga de reportes, datos de sesión activa, etc.).
+   - Componentes puros como **`MapView.jsx`**, **`Navbar.jsx`** y **`ProfileModal.jsx`** actúan como presentadores que reciben funciones callback y estados como propiedades (Props), garantizando la reutilización.
+2. **Custom Hooks:** 
+   - Centralización del consumo de datos geográficos para mantener el ciclo de vida React limpio e independiente del origen de datos.
+3. **Capa de Abstracción de API (Axios Interceptors):**
+   - Implementado en `api.js`. Un interceptor inyecta dinámicamente el token `Authorization: Bearer <JWT>` guardado en `localStorage` en cada petición HTTP saliente hacia el BFF, facilitando el control de seguridad de forma automática.
+4. **Estado Reactivo Global Compartido:**
+   - La sesión del usuario se distribuye hacia las vistas del mapa y barra de navegación en tiempo real, permitiendo cambios dinámicos de UI (ej: habilitar el dropdown de cambio de estado a brigadistas y actualizar el Avatar circular al instante).
+
+---
+
+## 2. Diagrama de Componentes de Software
+
+El siguiente diagrama detalla la interacción lógica y flujo de datos entre las distintas piezas del frontend y el pasadizo central hacia los microservicios:
+
+```mermaid
+graph TD
+    subgraph Frontend [mfe-mapeo - React App]
+        App[App.jsx - Contenedor Principal] --> Navbar[Navbar.jsx - Presentador de Sesión]
+        App --> MapView[MapView.jsx - Presentador de Mapa Leaflet]
+        App --> AuthModals[AuthModals.jsx - Formularios Login/Registro]
+        App --> ProfileModal[ProfileModal.jsx - Formulario Editar Perfil]
+        App --> ApiClient[api.js - Axios Client & JWT Interceptor]
+    end
+
+    subgraph Backend_Gateways [Infraestructura & Puertas]
+        ApiClient --> BFF[ms-bff:8080 - Backend For Frontend]
+        BFF --> KrakenD[krakend:8000 - API Gateway]
+    end
+    
+    style App fill:#1e272e,stroke:#34e7e4,stroke-width:2px,color:#fff
+    style MapView fill:#2f3542,stroke:#ff4757,stroke-width:1px,color:#fff
+    style Navbar fill:#2f3542,stroke:#2ed573,stroke-width:1px,color:#fff
+    style ProfileModal fill:#2f3542,stroke:#ffa502,stroke-width:1px,color:#fff
+    style ApiClient fill:#1e272e,stroke:#34e7e4,stroke-width:1px,color:#fff
+```
+
+---
+
+## 3. Tecnologías y Librerías Clave
+
+- **React 18 & Vite:** Entorno de compilación ultra veloz y servidor de desarrollo ágil.
+- **Leaflet & react-leaflet (1.9.4):** Motor de mapas de código abierto integrado con capas cartográficas base de **OpenStreetMap**.
+- **Axios:** Cliente HTTP para la comunicación con el Backend.
+- **Glassmorphic Glass Styling (Vanilla CSS):** Diseño de UI premium responsivo basado en translucidez de cristal y efectos de desenfoque.
+
+---
+
+## 4. Configuración y Setup del Servicio
+
+### Requisitos previos
+- **Node.js:** Versión 20.x LTS ("Iron").
+- **NPM** instalado.
+
+### Instalación Individual
+1. Navega al directorio `/mfe-mapeo`:
+   ```bash
+   cd mfe-mapeo
+   ```
+2. Instala las dependencias y librerías declaradas en `package.json`:
    ```bash
    npm install
    ```
-3. Ejecutar el servidor de desarrollo:
+3. Ejecuta el servidor de desarrollo de Vite:
    ```bash
    npm run dev
    ```
-4. Acceder en el navegador a `http://localhost:5173` (o el puerto que indique Vite).
+4. El frontend estará disponible localmente en: [http://localhost:5173](http://localhost:5173) (o el puerto configurado por Vite).
 
-## Tecnologías y Patrones
-- **React & Vite**: Para una construcción rápida y empaquetamiento optimizado.
-- **react-leaflet**: Integración con OpenStreetMap.
-- **Axios**: Para la comunicación HTTP con el API Gateway (BFF).
-- **Patrones**: Container/Presenter, Custom Hooks (`useReportes.js`).
+### Variables de Entorno
+Por defecto, la API se conecta al BFF central en `http://localhost:8080/api` mediante el archivo `src/api.js`. Si deseas modificar la dirección del gateway, edita la base URL del cliente Axios.
+
+---
+
+## 5. Descripción del Flujo y Características de la UI
+
+- **Mapa de Pantalla Completa:** Al abrir la aplicación, el usuario se encuentra con un mapa Leaflet interactivo cargado con todos los pines activos georreferenciados mediante sus coordenadas espaciales.
+- **Pines por Código de Colores:** Los focos se visualizan dinámicamente según su estado:
+  - 🔴 **Rojo (ACTIVO):** Peligro inminente sin control.
+  - 🟠 **Naranja (CONTROLADO):** Contenido por brigadas, bajo observación.
+  - ⚪ **Gris (EXTINGUIDO):** Superado por completo.
+- **Reporte Fácil:** Un ciudadano puede hacer doble clic en cualquier punto geográfico del mapa o presionar **"Reportar Incendio"** en la barra de navegación para abrir un formulario responsivo de reporte directo.
+- **Cambio de Estado Seguro (RBAC):** Si un usuario inicia sesión con rol de `BRIGADISTA` o `ADMINISTRADOR`, al presionar sobre cualquier pin de incendio se despliega un selector interactivo para modificar el estado del incendio. La actualización se refleja reactivamente en el mapa sin necesidad de recargar la página completa.
+- **Gestión de Perfil:** El modal de **Editar Perfil** permite a los usuarios alterar sus datos de localización (región, comuna), contacto (correo, teléfono) y credenciales en tiempo real.

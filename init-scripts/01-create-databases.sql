@@ -1,7 +1,7 @@
 -- Crear bases de datos para cada microservicio
-CREATE DATABASE IF NOT EXISTS ms_usuarios;
-CREATE DATABASE IF NOT EXISTS ms_mapeo;
-CREATE DATABASE IF NOT EXISTS demo_db;
+CREATE DATABASE ms_usuarios;
+CREATE DATABASE ms_mapeo;
+CREATE DATABASE demo_db;
 
 -- Asignar permisos
 GRANT ALL PRIVILEGES ON DATABASE ms_usuarios TO postgres;

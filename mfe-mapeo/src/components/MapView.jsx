@@ -1,101 +1,138 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
-// Fix para los íconos de Leaflet en React
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-let DefaultIcon = L.icon({
-    iconUrl: icon,
-    shadowUrl: iconShadow,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41]
-});
-L.Marker.prototype.options.icon = DefaultIcon;
-
-// Custom Fire Icon
-const fireIcon = new L.Icon({
-    iconUrl: 'https://cdn-icons-png.flaticon.com/512/785/785116.png',
-    iconSize: [30, 30],
-    iconAnchor: [15, 30]
+// Fix for default Leaflet icons in React
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-const LocationMarker = ({ onLocationSelected }) => {
-    useMapEvents({
-        click(e) {
-            onLocationSelected(e.latlng);
-        },
-    });
-    return null;
+// Custom color-coded icons
+const redIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+const orangeIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+const greyIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+const getMarkerIcon = (estado) => {
+  if (estado === 'CONTROLADO') return orangeIcon;
+  if (estado === 'EXTINGUIDO') return greyIcon;
+  return redIcon; // Default to ACTIVO
 };
 
-export const MapView = ({ reportes, onReportar }) => {
-    const [selectedPos, setSelectedPos] = useState(null);
-    const [descripcion, setDescripcion] = useState('');
+// Component to handle map clicks for reporting
+const MapClickHandler = ({ isReporting, onLocationSelected }) => {
+  useMapEvents({
+    click(e) {
+      if (isReporting) {
+        onLocationSelected(e.latlng);
+      }
+    },
+  });
+  return null;
+};
 
-    const handleReportar = () => {
-        if (selectedPos && descripcion) {
-            onReportar({
-                latitud: selectedPos.lat,
-                longitud: selectedPos.lng,
-                descripcion: descripcion,
-                tipo: 'URBANO',
-                estado: 'ACTIVO'
-            });
-            setSelectedPos(null);
-            setDescripcion('');
-        }
-    };
+export const MapView = ({ reportes, isReporting, onLocationSelected, currentUser, onStatusChange }) => {
+  // Center of Valle del Sol / Chile (approx)
+  const defaultCenter = [-33.4489, -70.6693];
 
-    return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-            <div style={{ padding: '15px', backgroundColor: '#d32f2f', color: 'white' }}>
-                <h3 style={{ margin: 0 }}>📍 Monitoreo y Reporte de Incendios</h3>
-                <p style={{ margin: 0, fontSize: '14px' }}>Haz clic en el mapa para reportar un nuevo foco</p>
-            </div>
-            
-            <MapContainer center={[-33.4569, -70.6483]} zoom={12} style={{ flexGrow: 1, height: '400px' }}>
-                <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='&copy; OpenStreetMap contributors'
-                />
-                
-                {reportes.map(r => (
-                    <Marker key={r.id} position={[r.latitud, r.longitud]} icon={fireIcon}>
-                        <Popup>
-                            <strong>{r.tipo}</strong><br/>
-                            {r.descripcion}<br/>
-                            <small>{r.estado}</small>
-                        </Popup>
-                    </Marker>
-                ))}
+  const isBrigadistaOrAdmin = currentUser && (
+    currentUser.rol === 'BRIGADISTA' || currentUser.rol === 'ADMINISTRADOR'
+  );
 
-                <LocationMarker onLocationSelected={(pos) => setSelectedPos(pos)} />
-
-                {selectedPos && (
-                    <Marker position={selectedPos}>
-                        <Popup>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <strong>Reportar aquí</strong>
-                                <input 
-                                    type="text" 
-                                    placeholder="Descripción..." 
-                                    value={descripcion} 
-                                    onChange={(e) => setDescripcion(e.target.value)}
-                                    style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
-                                />
-                                <button 
-                                    onClick={handleReportar}
-                                    style={{ backgroundColor: '#d32f2f', color: 'white', border: 'none', padding: '8px', borderRadius: '4px', cursor: 'pointer' }}
-                                >
-                                    Enviar Reporte
-                                </button>
-                            </div>
-                        </Popup>
-                    </Marker>
-                )}
-            </MapContainer>
+  return (
+    <div className="map-container">
+      {isReporting && (
+        <div className="report-tooltip">
+          Haz clic en el mapa para ubicar el incendio
         </div>
-    );
+      )}
+      <MapContainer 
+        center={defaultCenter} 
+        zoom={10} 
+        style={{ width: '100%', height: '100%' }}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        
+        <MapClickHandler isReporting={isReporting} onLocationSelected={onLocationSelected} />
+
+        {reportes.map((reporte) => (
+          <Marker 
+            key={reporte.id} 
+            position={[reporte.latitud, reporte.longitud]}
+            icon={getMarkerIcon(reporte.estado)}
+          >
+            <Popup>
+              <div style={{ minWidth: '180px' }}>
+                <strong style={{ fontSize: '14px' }}>Detalles del Reporte</strong>
+                <hr style={{ margin: '8px 0', borderColor: 'rgba(0,0,0,0.1)' }} />
+                <strong>Tipo:</strong> {reporte.tipo} <br />
+                <strong>Estado:</strong> <span style={{
+                  color: reporte.estado === 'ACTIVO' ? '#ff4757' : reporte.estado === 'CONTROLADO' ? '#ffa502' : '#70a1ff',
+                  fontWeight: 'bold'
+                }}>{reporte.estado}</span> <br />
+                <strong>Descripción:</strong> {reporte.descripcion} <br />
+                <small style={{ color: '#888' }}>Fecha: {new Date(reporte.fechaReporte).toLocaleString()}</small>
+
+                {isBrigadistaOrAdmin && (
+                  <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
+                      Modificar Estado:
+                    </label>
+                    <select 
+                      value={reporte.estado} 
+                      onChange={(e) => onStatusChange(reporte.id, e.target.value)}
+                      style={{ 
+                        width: '100%', 
+                        padding: '6px', 
+                        borderRadius: '4px',
+                        border: '1px solid #ccc',
+                        backgroundColor: '#fff',
+                        color: '#333',
+                        fontSize: '12px',
+                        outline: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="ACTIVO">ACTIVO (Foco encendido)</option>
+                      <option value="CONTROLADO">CONTROLADO (Bajo control)</option>
+                      <option value="EXTINGUIDO">EXTINGUIDO (Apagado)</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
+    </div>
+  );
 };

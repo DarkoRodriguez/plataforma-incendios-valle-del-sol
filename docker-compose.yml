@@ -38,8 +38,7 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - ms-usuarios
-      - ms-mapeo
+      - krakend
     networks:
       - plataforma-network
     restart: unless-stopped
@@ -109,6 +108,37 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - plataforma-network
+    restart: unless-stopped
+
+  # ============================================
+  # Frontend (Micro-Frontend Mapeo)
+  # ============================================
+  mfe-mapeo:
+    build:
+      context: ./mfe-mapeo
+      dockerfile: Dockerfile
+    container_name: mfe-mapeo
+    ports:
+      - "3000:80"
+    networks:
+      - plataforma-network
+    restart: unless-stopped
+
+  # ============================================
+  # API Gateway (KrakenD)
+  # ============================================
+  krakend:
+    image: devopsfaith/krakend:latest
+    container_name: krakend
+    volumes:
+      - ./krakend:/etc/krakend
+    ports:
+      - "8000:8080"
+    depends_on:
+      - ms-usuarios
+      - ms-mapeo
     networks:
       - plataforma-network
     restart: unless-stopped
