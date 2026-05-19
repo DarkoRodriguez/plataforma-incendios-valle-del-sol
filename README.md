@@ -28,21 +28,31 @@ La plataforma propone una solución desacoplada, escalable y tolerante a fallos,
 Este diagrama modela cómo interactúan los diversos actores del negocio (Ciudadanos, Brigadistas y Administradores) con los casos de uso principales de la plataforma (Registro de reportes, Monitoreo de focos, Edición de perfiles y Modificación de estados de incendio).
 
 ```
-[ INSERTAR AQUÍ EL DIAGRAMA DE CASOS DE USO ]
+<img width="824" height="747" alt="image" src="https://github.com/user-attachments/assets/0d6726bf-f121-47aa-9d35-baadc4395e62" />
+
 ```
 
 ### B. Diagrama de Contexto (Modelo C4)
 Define los límites lógicos de la plataforma frente a los usuarios finales y los sistemas externos integrados (como OpenStreetMap para el despliegue cartográfico base).
 
 ```
-[ INSERTAR AQUÍ EL DIAGRAMA DE CONTEXTO C4 ]
+<img width="731" height="663" alt="image" src="https://github.com/user-attachments/assets/c3027c48-d8e4-473e-ac1c-a0c92c5d8044" />
+
 ```
 
-### C. Diagrama de Despliegue (Kubernetes On-Premise)
+### C. Diagrama de Despliegue (On-Premise)
 Describe la infraestructura virtualizada mediante contenedores Docker y orquestación con Kubernetes para su instalación en los servidores municipales, asegurando soberanía de datos locales y escalamiento dinámico (HPA).
 
 ```
-[ INSERTAR AQUÍ EL DIAGRAMA DE DESPLIEGUE ]
+<img width="1938" height="2736" alt="Diagrama de Despliegue" src="https://github.com/user-attachments/assets/b4ddc83e-ef40-443d-a2b8-5a5c1e687e3f" />
+
+```
+### C. Diagrama de Contenedores 
+Representa visualmente la arquitectura de software, descompone el sistema  en sus piezas tecnológicas fundamentales.
+
+```
+<img width="3843" height="2523" alt="Diagrama de Contenedores" src="https://github.com/user-attachments/assets/20bed0ec-0e43-46ad-a148-15fa614cd324" />
+
 ```
 
 ---
@@ -121,13 +131,13 @@ Para el desarrollo de la "Plataforma Inteligente para la Gestión y Prevención 
 
 ## 2. Ramas de Soporte
 
-- **`feature/nombre-de-la-feature`**: Creadas a partir de `develop`. Se utilizan para desarrollar nuevas funcionalidades (ej. `feature/mapa-leaflet`, `feature/ms-usuarios-circuitbreaker`).
-- **`bugfix/nombre-del-bug`**: Creadas a partir de `develop` o `main` para resolver problemas no críticos encontrados durante el desarrollo.
-- **`hotfix/nombre-del-hotfix`**: Creadas directamente desde `main` para solucionar incidencias críticas en producción. Se integran de vuelta tanto a `main` como a `develop`.
+- **`feature/nombre-de-la-feature`**: Creadas a partir de `develop`. Se utilizan para desarrollar nuevas funcionalidades (ej. `feature/ms-usuarios`, `feature/mfe-mapeo`).
+- **`bugfix/nombre-del-bug`**: Creadas a partir de `develop` o `main` para resolver problemas no críticos encontrados durante el desarrollo. (No implementada aun)
+- **`hotfix/nombre-del-hotfix`**: Creadas directamente desde `main` para solucionar incidencias críticas en producción. Se integran de vuelta tanto a `main` como a `develop`. (No implementada aun)
 
 ## 3. Flujo de Trabajo (Workflow)
 
-1. **Creación**: Un desarrollador crea una rama `feature/reporte-incendios` desde `develop`.
+1. **Creación**: Un desarrollador crea una rama `feature/ms-mapeo` desde `develop`.
 2. **Desarrollo**: Se realizan commits atómicos y descriptivos.
 3. **Pull Request (PR)**: Una vez finalizada la tarea, se abre un PR hacia `develop`.
 4. **Code Review**: Otro miembro del equipo (o el mismo desarrollador si trabaja solo) revisa el código, asegurando la cobertura de pruebas unitarias (>60%).
@@ -154,8 +164,24 @@ Para levantar toda la suite de servicios e infraestructura integrada en un solo 
    ```bash
    docker compose ps
    ```
-4. Accede a las interfaces disponibles:
+4. Accede a la interfaz del frontend:
    - **Frontend (MFE Mapeo):** [http://localhost:3000](http://localhost:3000)
-   - **Pasarela Central (BFF):** [http://localhost:8080](http://localhost:8080)
-   - **API Gateway Interno (KrakenD):** [http://localhost:8000](http://localhost:8000)
-   - **Administración DB (pgAdmin4):** [http://localhost:5050](http://localhost:5050) (Usuario: `admin@example.com` / Contraseña: `admin`)
+
+
+## 8. Visualizacion de la ejecucion
+<img width="1915" height="992" alt="image" src="https://github.com/user-attachments/assets/3dbc1adb-696d-4592-9433-31dca37ed19a" />
+
+---
+
+<img width="1915" height="992" alt="image" src="https://github.com/user-attachments/assets/f98ee444-2f9c-4443-a6d8-602780aeed9d" />
+
+---
+
+<img width="1915" height="992" alt="image" src="https://github.com/user-attachments/assets/962f8993-e435-4380-8b6a-e4a5742052c4" />
+
+---
+
+<img width="1920" height="993" alt="image" src="https://github.com/user-attachments/assets/7cc438c4-9e9c-4592-aa36-de9cf24e6823" />
+
+
+
