@@ -5,7 +5,7 @@ services:
   # Base de Datos Compartida
   # ============================================
   postgres:
-    image: postgres:15-alpine
+    image: postgis/postgis:16-3.4-alpine
     container_name: plataforma-db
     environment:
       POSTGRES_USER: postgres
@@ -23,6 +23,26 @@ services:
       retries: 5
     networks:
       - plataforma-network
+
+  # ============================================
+  # Backend For Frontend (BFF)
+  # ============================================
+  ms-bff:
+    build:
+      context: ./ms-bff
+      dockerfile: Dockerfile
+    container_name: ms-bff
+    environment:
+      SPRING_APPLICATION_NAME: ms-bff
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - ms-usuarios
+      - ms-mapeo
+    networks:
+      - plataforma-network
+    restart: unless-stopped
 
   # ============================================
   # Microservicio: MS-USUARIOS
