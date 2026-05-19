@@ -27,33 +27,32 @@ La plataforma propone una solución desacoplada, escalable y tolerante a fallos,
 ### A. Diagrama de Casos de Uso
 Este diagrama modela cómo interactúan los diversos actores del negocio (Ciudadanos, Brigadistas y Administradores) con los casos de uso principales de la plataforma (Registro de reportes, Monitoreo de focos, Edición de perfiles y Modificación de estados de incendio).
 
-```
+
 <img width="824" height="747" alt="image" src="https://github.com/user-attachments/assets/0d6726bf-f121-47aa-9d35-baadc4395e62" />
 
-```
+
 
 ### B. Diagrama de Contexto (Modelo C4)
 Define los límites lógicos de la plataforma frente a los usuarios finales y los sistemas externos integrados (como OpenStreetMap para el despliegue cartográfico base).
 
-```
+
 <img width="731" height="663" alt="image" src="https://github.com/user-attachments/assets/c3027c48-d8e4-473e-ac1c-a0c92c5d8044" />
 
-```
+
 
 ### C. Diagrama de Despliegue (On-Premise)
 Describe la infraestructura virtualizada mediante contenedores Docker y orquestación con Kubernetes para su instalación en los servidores municipales, asegurando soberanía de datos locales y escalamiento dinámico (HPA).
 
-```
+
 <img width="1938" height="2736" alt="Diagrama de Despliegue" src="https://github.com/user-attachments/assets/b4ddc83e-ef40-443d-a2b8-5a5c1e687e3f" />
 
-```
 ### C. Diagrama de Contenedores 
 Representa visualmente la arquitectura de software, descompone el sistema  en sus piezas tecnológicas fundamentales.
 
-```
+
 <img width="3843" height="2523" alt="Diagrama de Contenedores" src="https://github.com/user-attachments/assets/20bed0ec-0e43-46ad-a148-15fa614cd324" />
 
-```
+
 
 ---
 
