@@ -16,7 +16,7 @@ En las últimas temporadas de sequía y calor extremo, los incendios forestales 
 - **Falta de Historial de Patrones:** Ausencia de bases de datos centralizadas con soporte para análisis geoespacial histórico que facilite la planificación preventiva.
 
 ### Propuesta Tecnológica Integral
-La plataforma propone una solución desacoplada, escalable y tolerante a fallos, construida bajo el ecosistema de **Microservicios**, **Micro-frontends** y un **API Gateway (BFF)**. Permite a los ciudadanos reportar focos geográficos de manera móvil inmediata ("Web-First"), mientras que a los Brigadistas y Administradores les proporciona herramientas de Control de Acceso Basado en Roles (RBAC) para el monitoreo interactivo y la actualización activa de estados de emergencia en tiempo real.
+La plataforma propone una solución desacoplada, escalable y tolerante a fallos, construida bajo el ecosistema de **Microservicios**, **Micro-frontends**, un **API Gateway (KrakenD)** y un **Backend For Frontend (BFF)**. Permite a los ciudadanos reportar focos geográficos de manera móvil inmediata ("Web-First"), mientras que a los Brigadistas y Administradores les proporciona herramientas de Control de Acceso Basado en Roles (RBAC) para el monitoreo interactivo y la actualización activa de estados de emergencia en tiempo real.
 
 ---
 
@@ -60,7 +60,7 @@ Representa visualmente la arquitectura de software, descompone el sistema  en su
 
 Para garantizar mantenibilidad, resiliencia y alta cohesión con bajo acoplamiento, la plataforma implementa los siguientes patrones de diseño y arquitectura:
 
-1. **Backend For Frontend (BFF):** Centraliza la interfaz de entrada para el cliente, aislando los microservicios internos y controlando transversalmente la resiliencia y políticas de orígenes cruzados (CORS).
+1. **API Gateway (KrakenD) & Backend For Frontend (BFF):** El API Gateway (KrakenD) centraliza el punto de entrada principal para el cliente en el puerto 8080, gestionando de forma unificada las políticas de orígenes cruzados (CORS). Por su parte, el BFF (`ms-bff`) recibe las solicitudes canalizadas desde el API Gateway, encargándose de la orquestación lógica, la resiliencia y el enrutamiento directo hacia los microservicios internos.
 2. **Database per Service:** Cada microservicio controla e interactúa con su propio esquema de base de datos aislada (PostgreSQL), evitando acoplamientos a nivel de persistencia de datos.
 3. **Persistencia Espacial (PostGIS):** El microservicio de mapeo aprovecha la extensión espacial de PostgreSQL para almacenar ubicaciones precisas como puntos geográficos y realizar consultas espaciales nativas rápidas.
 4. **Seguridad Centralizada (JWT & RBAC):** Control de acceso basado en tokens seguros que inyectan el Rol de usuario (`USUARIO`, `BRIGADISTA`, `ADMINISTRADOR`) permitiendo restringir rutas administrativas y de personal calificado.
@@ -72,11 +72,11 @@ Para garantizar mantenibilidad, resiliencia y alta cohesión con bajo acoplamien
 
 El repositorio está estructurado bajo una arquitectura modular (Monorrepo) que contiene los siguientes módulos y piezas desplegables de manera independiente:
 
-*   **[`/mfe-mapeo`](./mfe-mapeo):** Interfaz Web responsiva (React, Vite, react-leaflet). Permite visualizar el mapa comunal interactivo, posicionar marcadores y reportar incendios.
-*   **[`/ms-bff`](./ms-bff):** Backend For Frontend desarrollado en Spring Cloud Gateway. Centraliza el CORS y la resiliencia mediante disyuntores.
+*   **[`/mfe-mapeo`](./mfe-mapeo):** Interfaz Web responsiva (React, Vite, react-leaflet). Permite visualizar el mapa comunal interactivo, posicionar marcadores y reportar incendios. Se comunica de forma directa con el API Gateway en el puerto `8080`.
+*   **[`/krakend`](./krakend):** API Gateway principal y público de la plataforma (puerto `8080`). Recibe las solicitudes del Frontend, gestiona de forma centralizada las políticas de orígenes cruzados (CORS) y enruta internamente las peticiones hacia el BFF (`ms-bff`).
+*   **[`/ms-bff`](./ms-bff):** Backend For Frontend (BFF) desarrollado en Spring Boot. Recibe las peticiones canalizadas por KrakenD en el puerto interno `8080` (expuesto opcionalmente en el puerto `8090` del host). Se encarga de la orquestación lógica, la resiliencia (Circuit Breaker) y el enrutamiento hacia los microservicios correspondientes.
 *   **[`/ms-usuarios`](./ms-usuarios):** Microservicio Spring Boot que administra el registro, autenticación cifrada, JWT y perfiles de usuarios.
 *   **[`/ms-mapeo`](./ms-mapeo):** Microservicio Spring Boot que administra los reportes de incendios y georreferenciación espacial mediante Hibernate Spatial y PostGIS.
-*   **[`/krakend`](./krakend):** API Gateway secundario e interno para ruteo de bajo nivel y reenvío de encabezados seguros entre piezas.
 *   **[`/archetypes`](./archetypes):** Arquetipo Maven personalizado que estandariza la creación de nuevos servicios de la plataforma.
 
 ---
@@ -86,15 +86,16 @@ El repositorio está estructurado bajo una arquitectura modular (Monorrepo) que 
 Este documento detalla los patrones de diseño y arquetipos arquitectónicos seleccionados para el desarrollo de la **Plataforma Inteligente para la Gestión y Prevención de Incendios** (Evaluación Parcial 2).
 
 ## 1. Arquetipos y Arquitectura Base
-El sistema se ha construido siguiendo una arquitectura de **Microservicios** conectada mediante un **API Gateway / Backend For Frontend (BFF)**. Se ha desarrollado un Arquetipo Maven (`demo-archetype`) para garantizar que la creación de futuros microservicios siga una estructura coherente, incluyendo dependencias estandarizadas como Spring Boot Web, Data JPA, PostgreSQL y Flyway.
+El sistema se ha construido siguiendo una arquitectura de **Microservicios** conectada mediante una capa de **API Gateway (KrakenD)** y un **Backend For Frontend (BFF)**. Se ha desarrollado un Arquetipo Maven (`demo-archetype`) para garantizar que la creación de futuros microservicios siga una estructura coherente, incluyendo dependencias estandarizadas como Spring Boot Web, Data JPA, PostgreSQL y Flyway.
 
-- **BFF (ms-bff):** Actúa como el punto de entrada único para el frontend. Enruta las solicitudes a `ms-usuarios` o `ms-mapeo`. Mejora la seguridad y consolida las respuestas.
+- **API Gateway (KrakenD):** Actúa como la puerta de entrada única y pública de la plataforma en el puerto `8080`. Recibe las solicitudes del frontend, maneja la configuración de orígenes cruzados (CORS) de forma centralizada y enruta las peticiones de forma directa al BFF.
+- **BFF (ms-bff):** Backend For Frontend que recibe las llamadas desde el API Gateway. Actúa como orquestador lógico y pasarela interna, gestionando de manera segura el flujo hacia los microservicios finales.
 - **Microservicios Independientes:** `ms-usuarios` gestiona la identidad y autenticación. `ms-mapeo` se encarga de la gestión geoespacial (PostGIS) de los focos de incendio.
 
 ## 2. Patrones de Diseño (Backend)
 
-### 2.1 Pattern: API Gateway / BFF
-Implementado usando `Spring Cloud Gateway` en el componente `ms-bff`. Desacopla al frontend de la complejidad de conocer la ubicación y los puertos de cada microservicio interno.
+### 2.1 Pattern: API Gateway + BFF
+Implementado en dos capas diferenciadas: **KrakenD** en la frontera externa para enrutamiento rápido, CORS y seguridad perimetral, y **ms-bff** internamente para aplicar orquestación de servicios y resiliencia. Esto desacopla por completo al frontend de los microservicios internos del backend y optimiza el flujo de red.
 
 ### 2.2 Pattern: Circuit Breaker
 Implementado mediante **Resilience4j** en el `ms-bff`. Si el `ms-mapeo` se vuelve inaccesible o responde con lentitud debido a una consulta pesada, el Circuit Breaker "abre" el circuito, fallando rápidamente y evitando la saturación del sistema. 
@@ -181,6 +182,32 @@ Para levantar toda la suite de servicios e infraestructura integrada en un solo 
 ---
 
 <img width="1920" height="993" alt="image" src="https://github.com/user-attachments/assets/7cc438c4-9e9c-4592-aa36-de9cf24e6823" />
+
+---
+
+## 9. Persistencia de Datos en el Entorno
+
+La plataforma está diseñada con mecanismos avanzados de **persistencia de datos a nivel de contenedores**, asegurando que el estado del sistema, los usuarios registrados, los reportes de incendios y las configuraciones de herramientas de administración no se pierdan entre reinicios.
+
+### A. Persistencia de Base de Datos (PostgreSQL & PostGIS)
+Se utiliza un **volumen nombrado** de Docker llamado `postgres_data`, el cual se monta en la ruta `/var/lib/postgresql/data` del contenedor de base de datos (`plataforma-db`).
+- **Beneficio:** Al detener los contenedores usando `docker compose down`, todos los registros de la base de datos se conservan. Al volver a ejecutar `docker compose up -d`, la base de datos se levanta con toda la información intacta.
+- **Esquema Inicial:** Flyway se ejecuta automáticamente en cada inicio de los microservicios (`ms-usuarios` y `ms-mapeo`) para validar y actualizar el esquema relacional y geoespacial sin alterar los datos existentes.
+
+### B. Persistencia de pgAdmin4
+Se ha configurado el volumen nombrado `pgadmin_data` mapeado a la ruta `/var/lib/pgadmin` dentro del contenedor `pgadmin`.
+- **Beneficio:** Evita que se pierdan los servidores registrados, credenciales guardadas e historial de consultas dentro de pgAdmin al apagar el contenedor.
+
+### C. Mantenimiento y Limpieza Completa (Hard Reset)
+Si en algún momento necesitas restablecer el sistema a su estado inicial de fábrica (eliminando todos los reportes y usuarios de prueba creados):
+1. Detén los contenedores eliminando los volúmenes persistentes asociados:
+   ```bash
+   docker compose down -v
+   ```
+2. Vuelve a iniciar los contenedores. Docker creará volúmenes limpios y ejecutará nuevamente los scripts de inicialización SQL (`./init-scripts`) y las migraciones de Flyway:
+   ```bash
+   docker compose up -d --build
+   ```
 
 
 
