@@ -127,7 +127,38 @@ services:
     networks:
       - plataforma-network
     restart: unless-stopped
+  # ============================================
+  # Bucket Imagenes (MiniIO)
+  # ============================================
+  minio-storage:
+    image: minio/minio
+    container_name: minio_local
+    ports:
+      - "9000:9000"       # Puerto para la API (Tu código se conecta aquí)
+      - "9001:9001"       # Puerto para la consola web (Tú entras aquí)
+    environment:
+      MINIO_ROOT_USER: minio_userlog
+      MINIO_ROOT_PASSWORD: minio_passlog
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
 
+    
+  #===========================================================
+  #===== Crear el bucket de manera automática al iniciar =====
+  #===========================================================
+  minio-init:
+    image: minio/mc:latest
+    container_name: minio_configurador
+    depends_on:
+      - minio-storage
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc alias set mials http://minio-storage:9000 minio_userlog minio_passlog); do echo 'Esperando a MinIO...'; sleep 1; done;
+      /usr/bin/mc mb --ignore-existing mials/multimedia-reportes;
+      /usr/bin/mc anonymous set download mials/multimedia-reportes;
+      exit 0;
+      "
   # ============================================
   # API Gateway (KrakenD)
   # ============================================
@@ -167,6 +198,7 @@ services:
 # ============================================
 volumes:
   postgres_data:
+  minio_data:
 
 # ============================================
 # Redes
