@@ -29,7 +29,7 @@ services:
   # ============================================
   ms-bff:
     build:
-      context: ./ms-bff
+      context: ./backend/ms-bff
       dockerfile: Dockerfile
     container_name: ms-bff
     environment:
@@ -50,7 +50,7 @@ services:
   # ============================================
   ms-usuarios:
     build:
-      context: ./ms-usuarios
+      context: ./backend/ms-usuarios
       dockerfile: Dockerfile
     container_name: ms-usuarios
     environment:
@@ -73,7 +73,7 @@ services:
   # ============================================
   ms-mapeo:
     build:
-      context: ./ms-mapeo
+      context: ./backend/ms-mapeo
       dockerfile: Dockerfile
     container_name: ms-mapeo
     environment:
@@ -96,7 +96,7 @@ services:
   # ============================================
   demo:
     build:
-      context: ./demo
+      context: ./backend/demo
       dockerfile: Dockerfile
     container_name: demo-service
     environment:
@@ -119,7 +119,7 @@ services:
   # ============================================
   mfe-mapeo:
     build:
-      context: ./mfe-mapeo
+      context: ./frontend/mfe-mapeo
       dockerfile: Dockerfile
     container_name: mfe-mapeo
     ports:
