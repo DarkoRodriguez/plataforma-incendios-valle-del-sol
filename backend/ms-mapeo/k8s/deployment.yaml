@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-mapeo
+  namespace: plataforma-incendios
+  labels:
+    app: ms-mapeo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-mapeo
+  template:
+    metadata:
+      labels:
+        app: ms-mapeo
+    spec:
+      containers:
+        - name: ms-mapeo
+          image: plataforma/ms-mapeo:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8082
+              name: http
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/ms_mapeo
+            - name: SPRING_DATASOURCE_USERNAME
+              value: postgres
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: postgres
+            - name: SERVER_PORT
+              value: "8082"
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "100m"

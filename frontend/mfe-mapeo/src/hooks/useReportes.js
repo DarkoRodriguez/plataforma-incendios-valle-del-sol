@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-// La URL base apuntaría al API Gateway (BFF)
-const API_URL = 'http://localhost:8080/api/mapeo/reportes';
+const API_URL = `${import.meta.env.VITE_API_BASE || '/api'}/mapeo/reportes`;
 
 export const useReportes = () => {
     const [reportes, setReportes] = useState([]);

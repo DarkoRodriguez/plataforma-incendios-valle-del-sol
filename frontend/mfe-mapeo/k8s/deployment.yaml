@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mfe-mapeo
+  namespace: plataforma-incendios
+  labels:
+    app: mfe-mapeo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mfe-mapeo
+  template:
+    metadata:
+      labels:
+        app: mfe-mapeo
+    spec:
+      containers:
+        - name: mfe-mapeo
+          image: plataforma/mfe-mapeo:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: http
+          resources:
+            limits:
+              memory: "256Mi"
+              cpu: "300m"
+            requests:
+              memory: "128Mi"
+              cpu: "50m"
