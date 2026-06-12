@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-usuarios
+  namespace: plataforma-incendios
+  labels:
+    app: ms-usuarios
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-usuarios
+  template:
+    metadata:
+      labels:
+        app: ms-usuarios
+    spec:
+      containers:
+        - name: ms-usuarios
+          image: plataforma/ms-usuarios:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+              name: http
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/ms_usuarios
+            - name: SPRING_DATASOURCE_USERNAME
+              value: postgres
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: postgres
+            - name: SERVER_PORT
+              value: "8081"
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "100m"

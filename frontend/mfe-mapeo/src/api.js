@@ -1,9 +1,8 @@
 import axios from 'axios';
 
 // Create an Axios instance pointing to the API Gateway (KrakenD)
-// Create an Axios instance pointing to the BFF
 const api = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: import.meta.env.VITE_API_BASE || '/api',
 });
 
 // Add a request interceptor to attach the JWT token
