@@ -42,3 +42,16 @@ management:
   endpoint:
     health:
       show-details: always
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui/index.html
+    urls:
+      - name: BFF Gateway
+        url: /v3/api-docs
+      - name: ms-usuarios
+        url: /api/usuarios/v3/api-docs
+      - name: ms-mapeo
+        url: /api/mapeo/v3/api-docs
