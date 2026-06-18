@@ -9,7 +9,8 @@
   "extra_config": {
     "security/cors": {
       "allow_origins": [
-        "http://localhost:3000"
+        "http://localhost:3000",
+        "http://localhost"
       ],
       "allow_methods": [
         "GET",

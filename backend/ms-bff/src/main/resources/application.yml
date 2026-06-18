@@ -16,6 +16,11 @@ spring:
             uri: http://ms-mapeo:8082
             predicates:
               - Path=/api/mapeo/**
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8080/realms/demo}
 
 
 # Resilience4j
@@ -55,3 +60,6 @@ springdoc:
         url: /api/usuarios/v3/api-docs
       - name: ms-mapeo
         url: /api/mapeo/v3/api-docs
+
+# OAuth2 Resource Server (JWT)
+

@@ -1,2 +1,4 @@
-/home/kishi/Github/plataforma-incendios-valle-del-sol/backend/ms-bff/src/main/java/com/example/msbff/CorsConfig.java
-/home/kishi/Github/plataforma-incendios-valle-del-sol/backend/ms-bff/src/main/java/com/example/msbff/MsBffApplication.java
+/home/kishi/Fullstack3/plataforma-incendios-valle-del-sol/backend/ms-bff/src/main/java/com/example/msbff/CorsConfig.java
+/home/kishi/Fullstack3/plataforma-incendios-valle-del-sol/backend/ms-bff/src/main/java/com/example/msbff/MsBffApplication.java
+/home/kishi/Fullstack3/plataforma-incendios-valle-del-sol/backend/ms-bff/src/main/java/com/example/msbff/SecurityConfig.java
+/home/kishi/Fullstack3/plataforma-incendios-valle-del-sol/backend/ms-bff/src/main/java/com/example/msbff/controller/ValidateController.java

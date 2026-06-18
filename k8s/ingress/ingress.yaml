@@ -16,7 +16,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: ms-bff
+                name: krakend
                 port:
                   number: 8080
           - path: /swagger-ui
