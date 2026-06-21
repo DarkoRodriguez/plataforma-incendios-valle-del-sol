@@ -30,3 +30,7 @@ logging:
 springdoc:
   api-docs:
     path: /api/mapeo/v3/api-docs
+
+security:
+  jwt:
+    jwks-url: ${JWK_SET_URI:http://ms-usuarios:8081/.well-known/jwks.json}

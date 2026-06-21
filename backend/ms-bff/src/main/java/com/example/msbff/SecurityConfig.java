@@ -19,6 +19,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                     .requestMatchers(HttpMethod.GET, "/api/health", "/actuator/health").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/validate").authenticated()
+                    .requestMatchers("/api/usuarios/**").permitAll()
+                    .requestMatchers("/api/mapeo/**").permitAll()
                     .anyRequest().denyAll())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}));
 

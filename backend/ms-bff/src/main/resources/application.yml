@@ -20,7 +20,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8080/realms/demo}
+          issuer-uri: ${JWT_ISSUER:http://localhost:8081}
+          jwk-set-uri: ${JWK_SET_URI:http://localhost:8081/.well-known/jwks.json}
 
 
 # Resilience4j

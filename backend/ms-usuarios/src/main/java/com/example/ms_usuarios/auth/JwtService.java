@@ -23,7 +23,7 @@ public class JwtService {
 
     public JwtService(
             JwtEncoder jwtEncoder,
-            @Value("${security.jwt.issuer:http://localhost:8082}") String issuer,
+            @Value("${security.jwt.issuer:http://localhost:8081}") String issuer,
             @Value("${security.jwt.access-token-minutes:60}") long accessTokenMinutes
     ) {
         this.jwtEncoder = jwtEncoder;

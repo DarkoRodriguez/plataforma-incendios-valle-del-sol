@@ -1,0 +1,19 @@
+# RSA keys (Security sensitive)
+*.pem
+
+# IDEs and OS files
+.idea/
+.vscode/
+*.suo
+*.ntvsca
+*.ntvssproj
+*.user
+.DS_Store
+
+# Build artifacts
+**/target/
+**/build/
+**/bin/
+.gradle/
+**/node_modules/
+dist/
