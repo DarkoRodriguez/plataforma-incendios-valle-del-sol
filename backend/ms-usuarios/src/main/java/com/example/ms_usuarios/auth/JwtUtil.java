@@ -1,78 +1,114 @@
 package com.example.ms_usuarios.auth;
 
+import java.io.IOException;
+import java.math.BigInteger;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.spec.RSAPublicKeySpec;
+import java.util.Base64;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+
 import java.security.Key;
 import java.util.Date;
 
-import org.springframework.stereotype.Component;
-
 import com.example.ms_usuarios.model.User;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
-
 /**
- * Utilidad encargada de la generación, parseo y validación de tokens JWT en el microservicio de usuarios.
- * Utiliza una clave simétrica compartida estática para garantizar consistencia entre microservicios.
+ * JwtUtil actualizado para validar tokens RS256 usando JWKS publicado por el servicio de autenticación.
+ * Recupera la clave pública desde la URL configurada (por defecto: http://localhost:8081/.well-known/jwks.json).
  */
 @Component
 public class JwtUtil {
 
-    /**
-     * Clave estática para firma de tokens JWT en el ecosistema (estilo simétrico HMAC).
-     */
-    private static final String SECRET_STRING = "valle_del_sol_super_secret_jwt_key_1234567890_valle_del_sol_super_secret_jwt_key";
-    
-    /**
-     * Objeto Key generado con algoritmo HMAC-SHA a partir de la constante de clave.
-     */
-    private static final Key key = Keys.hmacShaKeyFor(SECRET_STRING.getBytes());
-    
-    /**
-     * Tiempo de expiración por defecto de los tokens (24 horas en milisegundos).
-     */
-    private static final long EXPIRATION_TIME = 86400000;
+    private final String jwksUrl;
+    private volatile PublicKey publicKey;
+    private final HttpClient httpClient = HttpClient.newHttpClient();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    /**
-     * Genera un Token JWT firmado digitalmente que incluye las credenciales e información clave del usuario.
-     * 
-     * @param user Entidad del usuario logueado.
-     * @return Token JWT en formato String.
-     */
-    public String generateToken(User user) {
-        return Jwts.builder()
-                .setSubject(user.getUsername())
-                .claim("userId", user.getId())
-                .claim("role", user.getRol())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(key)
-                .compact();
+    public JwtUtil(@Value("${security.jwt.jwks-url:http://localhost:8081/.well-known/jwks.json}") String jwksUrl) {
+        this.jwksUrl = jwksUrl;
+        try {
+            this.publicKey = fetchPublicKeyFromJwks();
+        } catch (Exception e) {
+            // leave null; parseToken will attempt fetch on demand
+            this.publicKey = null;
+        }
     }
 
-    /**
-     * Decodifica y extrae los claims del token JWT validando su firma criptográfica.
-     * 
-     * @param token Token JWT recibido (con o sin prefijo "Bearer ").
-     * @return Claims decodificados del token.
-     */
-    public io.jsonwebtoken.Claims parseToken(String token) {
+    // JwtUtil only validates RS256 tokens via JWKS (no local generation here).
+
+    private PublicKey fetchPublicKeyFromJwks() throws Exception {
+        HttpRequest req = HttpRequest.newBuilder().uri(URI.create(jwksUrl)).GET().build();
+        HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+        if (resp.statusCode() != 200) {
+            throw new IOException("Failed to fetch jwks: " + resp.statusCode());
+        }
+        JsonNode root = objectMapper.readTree(resp.body());
+        JsonNode keys = root.get("keys");
+        if (keys == null || !keys.isArray() || keys.size() == 0) {
+            throw new IOException("No keys in jwks");
+        }
+        JsonNode jwk = keys.get(0);
+        String kty = jwk.path("kty").asText();
+        if (!"RSA".equalsIgnoreCase(kty)) {
+            throw new IOException("Unsupported key type: " + kty);
+        }
+        String n = jwk.path("n").asText();
+        String e = jwk.path("e").asText();
+        byte[] nb = Base64.getUrlDecoder().decode(n);
+        byte[] eb = Base64.getUrlDecoder().decode(e);
+        BigInteger modulus = new BigInteger(1, nb);
+        BigInteger exponent = new BigInteger(1, eb);
+        RSAPublicKeySpec spec = new RSAPublicKeySpec(modulus, exponent);
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+        return kf.generatePublic(spec);
+    }
+
+    private Claims parseTokenInternal(String token) throws Exception {
         if (token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
+        if (publicKey == null) {
+            synchronized (this) {
+                if (publicKey == null) {
+                    publicKey = fetchPublicKeyFromJwks();
+                }
+            }
+        }
         return Jwts.parserBuilder()
-                .setSigningKey(key)
+                .setSigningKey(publicKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
     }
 
-    /**
-     * Extrae de forma segura el ID de usuario del token.
-     * 
-     * @param token Token JWT.
-     * @return Identificador único del usuario, o null en caso de error.
-     */
+    public Claims parseToken(String token) {
+        try {
+            return parseTokenInternal(token);
+        } catch (Exception e) {
+            try {
+                // retry once by refreshing key
+                this.publicKey = fetchPublicKeyFromJwks();
+                return parseTokenInternal(token);
+            } catch (Exception ex) {
+                throw new RuntimeException("Invalid token", ex);
+            }
+        }
+    }
+
     public Long getUserId(String token) {
         try {
             return parseToken(token).get("userId", Long.class);
@@ -81,12 +117,6 @@ public class JwtUtil {
         }
     }
 
-    /**
-     * Extrae de forma segura el Rol del usuario del token.
-     * 
-     * @param token Token JWT.
-     * @return Nombre del Rol (USUARIO, BRIGADISTA, ADMINISTRADOR), o null en caso de error.
-     */
     public String getRole(String token) {
         try {
             return parseToken(token).get("role", String.class);

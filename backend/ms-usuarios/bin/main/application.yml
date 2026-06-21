@@ -1,0 +1,21 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: ms-usuarios
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/ms_usuarios}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+security:
+  jwt:
+    issuer: ${JWT_ISSUER:http://localhost:8082}
+    access-token-minutes: ${JWT_ACCESS_TOKEN_MINUTES:60}
+    private-key-path: ${JWT_PRIVATE_KEY_PATH:../private_key.pem}
+    public-key-path: ${JWT_PUBLIC_KEY_PATH:../public_key.pem}

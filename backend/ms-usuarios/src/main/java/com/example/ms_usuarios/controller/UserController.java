@@ -28,9 +28,6 @@ import com.example.ms_usuarios.service.UserService;
 public class UserController {
 
     @Autowired
-    private AuthService authService;
-
-    @Autowired
     private UserService userService;
 
     @Autowired
@@ -42,45 +39,7 @@ public class UserController {
      * @param req Datos de registro que incluyen credenciales y datos de localización/contacto.
      * @return Respuesta con el Token JWT generado y los datos públicos del usuario registrado.
      */
-    @PostMapping("/auth/register")
-    public ResponseEntity<AuthResponseDTO> register(@RequestBody RegisterRequest req) {
-        if (userService.findByUsername(req.username).isPresent()) {
-            return ResponseEntity.badRequest().build();
-        }
-        User newUser = new User(req.username, req.password);
-        newUser.setRegion(req.region);
-        newUser.setComuna(req.comuna);
-        newUser.setCorreo(req.correo);
-        newUser.setTelefono(req.telefono);
-        if (req.rol != null) {
-            newUser.setRol(req.rol.toUpperCase());
-        }
-        User savedUser = userService.save(newUser);
-        String token = jwtUtil.generateToken(savedUser);
-        return ResponseEntity.ok(new AuthResponseDTO(token, new UserDTO(
-            savedUser.getId(), savedUser.getUsername(), savedUser.getRegion(),
-            savedUser.getComuna(), savedUser.getCorreo(), savedUser.getTelefono(), savedUser.getRol()
-        )));
-    }
-
-    /**
-     * Endpoint para autenticar a un usuario mediante sus credenciales.
-     * 
-     * @param req Nombre de usuario y contraseña.
-     * @return Respuesta con el Token JWT correspondiente y los detalles del perfil si el login es exitoso.
-     */
-    @PostMapping("/auth/login")
-    public ResponseEntity<AuthResponseDTO> login(@RequestBody LoginRequest req) {
-        return authService.authenticate(req.username, req.password)
-                .map(u -> {
-                    String token = jwtUtil.generateToken(u);
-                    return ResponseEntity.ok(new AuthResponseDTO(token, new UserDTO(
-                        u.getId(), u.getUsername(), u.getRegion(),
-                        u.getComuna(), u.getCorreo(), u.getTelefono(), u.getRol()
-                    )));
-                })
-                .orElse(ResponseEntity.status(401).build());
-    }
+    // Auth endpoints are provided by AuthController. UserController keeps user profile endpoints.
 
     /**
      * Obtiene los datos públicos de un usuario por su identificador único.
@@ -156,24 +115,6 @@ public class UserController {
     /**
      * Payload de entrada para el registro de nuevos usuarios.
      */
-    static class RegisterRequest {
-        public String username;
-        public String password;
-        public String region;
-        public String comuna;
-        public String correo;
-        public String telefono;
-        public String rol;
-    }
-
-    /**
-     * Payload de entrada para el inicio de sesión.
-     */
-    static class LoginRequest {
-        public String username;
-        public String password;
-    }
-
     /**
      * Payload de entrada para la actualización de perfiles de usuario.
      */
