@@ -1,0 +1,80 @@
+@startuml C3-Componentes-Plataforma-Incendios
+
+title C3 - Diagrama de Componentes: Plataforma Inteligente de Gestión de Incendios
+
+skinparam componentStyle rectangle
+skinparam packageStyle rect
+
+actor Usuario
+
+package "BFF / API Gateway" {
+  [ValidateController]
+  [JWTValidationFilter]
+  [GatewayRoutes\n(Circuit Breaker)]
+  [SecurityConfig]
+  [CorsConfig]
+}
+
+package "ms-users" {
+  [AuthController]
+  [UserController]
+  [JwksController]
+  [AuthService]
+  [UserService]
+  [JwtService]
+  [UserRepository]
+}
+
+package "ms-reports" {
+  [FireReportController]
+  [FireReportService]
+  [FireReportRepository]
+  [MinioService]
+  [PostGIS Operations]
+}
+
+package "ms-alerts" {
+  [AlertController]
+  [AlertService]
+  [PushNotificationService]
+  [SSE Broadcaster]
+  [AlertRepository]
+  [PushSubscriptionRepository]
+}
+
+package "Infra" {
+  [MinIO]
+  [PostgreSQL + PostGIS]
+}
+
+Usuario --> [BFF / API Gateway] : usa API REST
+[ValidateController] --> [JWTValidationFilter] : valida JWT
+[JWTValidationFilter] --> [GatewayRoutes\n(Circuit Breaker)] : pasa a enrutador
+[GatewayRoutes\n(Circuit Breaker)] --> [ms-users] : /api/users/
+[GatewayRoutes\n(Circuit Breaker)] --> [ms-reports] : /api/reports/
+[GatewayRoutes\n(Circuit Breaker)] --> [ms-alerts] : /api/alerts
+
+[FireReportController] --> [FireReportService] : delega lógica
+[FireReportService] --> [FireReportRepository] : guarda/consulta reportes
+[FireReportRepository] --> [PostgreSQL + PostGIS] : persiste reportes
+[FireReportService] --> [MinioService] : guarda multimedia
+[MinioService] --> [MinIO] : almacena objetos
+
+[AlertController] --> [AlertService] : crea alertas
+[AlertService] --> [AlertRepository] : persiste alertas
+[AlertService] --> [PushSubscriptionRepository] : consulta suscripciones
+[AlertRepository] --> [PostgreSQL + PostGIS] : persiste alertas
+[PushSubscriptionRepository] --> [PostgreSQL + PostGIS] : persiste suscripciones
+[AlertService] --> [PushNotificationService] : envía push
+[AlertService] --> [SSE Broadcaster] : difunde en tiempo real
+[SSE Broadcaster] --> [PostgreSQL + PostGIS] : registra eventos
+
+[AuthController] --> [AuthService] : maneja autenticación
+[AuthService] --> [JwtService] : genera/valida JWT
+[AuthService] --> [UserRepository] : valida credenciales
+[UserController] --> [UserService] : negocio de usuarios
+[UserService] --> [UserRepository] : acceso a datos
+[UserRepository] --> [PostgreSQL + PostGIS] : persiste usuarios
+[JwksController] --> [JwtService] : expone claves públicas
+
+@enduml

@@ -1,0 +1,43 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: ms-alerts
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/ms_alerts}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+    show-sql: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+
+vapid:
+  public:
+    key: ${VAPID_PUBLIC_KEY:}
+  private:
+    key: ${VAPID_PRIVATE_KEY:}
+  subject: ${VAPID_SUBJECT:mailto:admin@example.com}
+
+springdoc:
+  api-docs:
+    path: /api/alerts/v3/api-docs
+
+security:
+  jwt:
+    jwks-url: ${JWK_SET_URI:http://ms-users:8081/.well-known/jwks.json}

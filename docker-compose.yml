@@ -1,8 +1,7 @@
-version: '3.8'
 
 services:
   # ============================================
-  # Base de Datos Compartida
+  # Shared Database (PostGIS)
   # ============================================
   postgres:
     image: postgis/postgis:16-3.4-alpine
@@ -25,43 +24,43 @@ services:
       - plataforma-network
 
   # ============================================
-  # Backend For Frontend (BFF)
+  # Backend For Frontend (BFF / API Gateway)
   # ============================================
   ms-bff:
     build:
-      context: ./backend/ms-bff
+      context: ./backend/bff
       dockerfile: Dockerfile
     container_name: ms-bff
     environment:
       SPRING_APPLICATION_NAME: ms-bff
       SERVER_PORT: 8080
-      JWT_ISSUER: http://ms-usuarios:8081
-      JWK_SET_URI: http://ms-usuarios:8081/.well-known/jwks.json
+      JWT_ISSUER: http://ms-users:8081
+      JWK_SET_URI: http://ms-users:8081/.well-known/jwks.json
     ports:
       - "8090:8080"
     depends_on:
-      - ms-usuarios
-      - ms-mapeo
+      - ms-users
+      - ms-reports
+      - ms-alerts
     networks:
       - plataforma-network
     restart: unless-stopped
 
-
   # ============================================
-  # Microservicio: MS-USUARIOS
+  # Microservice: MS-USUARIOS (Authentication)
   # ============================================
-  ms-usuarios:
+  ms-users:
     build:
-      context: ./backend/ms-usuarios
+      context: ./backend/ms-users
       dockerfile: Dockerfile
-    container_name: ms-usuarios
+    container_name: ms-users
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ms_usuarios
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
-      SPRING_APPLICATION_NAME: ms-usuarios
+      SPRING_APPLICATION_NAME: ms-users
       SERVER_PORT: 8081
-      JWT_ISSUER: http://ms-usuarios:8081
+      JWT_ISSUER: http://ms-users:8081
       JWT_PRIVATE_KEY_PATH: /run/keys/private_key.pem
       JWT_PUBLIC_KEY_PATH: /run/keys/public_key.pem
     volumes:
@@ -77,43 +76,83 @@ services:
     restart: unless-stopped
 
   # ============================================
-  # Microservicio: MS-MAPEO
+  # Microservice: MS-MAPEO (Fire Reports & GIS)
   # ============================================
-  ms-mapeo:
+  ms-reports:
     build:
-      context: ./backend/ms-mapeo
+      context: ./backend/ms-reports
       dockerfile: Dockerfile
-    container_name: ms-mapeo
+    container_name: ms-reports
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ms_mapeo
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
-      SPRING_APPLICATION_NAME: ms-mapeo
+      SPRING_APPLICATION_NAME: ms-reports
       SERVER_PORT: 8082
-      JWK_SET_URI: http://ms-usuarios:8081/.well-known/jwks.json
+      JWK_SET_URI: http://ms-users:8081/.well-known/jwks.json
+      MINIO_ENDPOINT: http://minio-storage:9000
+      MINIO_EXTERNAL_URL: http://localhost:9000
+      MINIO_ACCESS_KEY: minio_userlog
+      MINIO_SECRET_KEY: minio_passlog
+      MINIO_BUCKET: multimedia-reportes
     ports:
       - "8082:8082"
     depends_on:
       postgres:
         condition: service_healthy
+      minio-storage:
+        condition: service_started
     networks:
       - plataforma-network
     restart: unless-stopped
 
   # ============================================
-  # Servicio Demo (Opcional)
+  # Microservice: MS-ALERTS (Community Alerts)
   # ============================================
-  demo:
+  ms-alerts:
     build:
-      context: ./backend/demo
+      context: ./backend/ms-alerts
       dockerfile: Dockerfile
-    container_name: demo-service
+    container_name: ms-alerts
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/demo_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ms_alerts
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
-      SPRING_APPLICATION_NAME: demo
+      SPRING_APPLICATION_NAME: ms-alerts
       SERVER_PORT: 8083
+      JWK_SET_URI: http://ms-users:8081/.well-known/jwks.json
+      VAPID_PUBLIC_KEY: |
+        -----BEGIN PUBLIC KEY-----
+        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnRSHtSYsO1Hcq2b8ZKuz
+        NCVMe5jUkij/eUoLe9wrBhDs69WT0LBSxhNLVuFc0F2ZwdjGFUz4ehqDey25c/Mb
+        Ih34C7fp5gBqpDL5TG40UjEozGxe2KPVcWkOgbq+bm35zlvDxdwo5tTYW5KhKBrz
+        ELm8SykwP9GKP/vv66AOHlczpXWoBTJ6H5OtGFjkKBVtENSxzMkA7aiN46+zJIjU
+        YVhX4zySiFkoFaaLGlii4WvCtWoQZtUd06X0qgMzXVwWpFtOzZB0G0zXC5WXg2Lo
+        qiKh4Oorj2tI3xIldBKbuK17099rHWa9qVvqQB01FpAHyavLeGEjfWOTrxcBECNm
+        FQIDAQAB
+        -----END PUBLIC KEY-----
+      VAPID_PRIVATE_KEY: |
+        -----BEGIN PRIVATE KEY-----
+        MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCdFIe1Jiw7Udyr
+        Zvxkq7M0JUx7mNSSKP95Sgt73CsGEOzr1ZPQsFLGE0tW4VzQXZnB2MYVTPh6GoN7
+        Lblz8xsiHfgLt+nmAGqkMvlMbjRSMSjMbF7Yo9VxaQ6Bur5ubfnOW8PF3Cjm1Nhb
+        kqEoGvMQubxLKTA/0Yo/++/roA4eVzOldagFMnofk60YWOQoFW0Q1LHMyQDtqI3j
+        r7MkiNRhWFfjPJKIWSgVposaWKLha8K1ahBm1R3TpfSqAzNdXBakW07NkHQbTNcL
+        lZeDYuiqIqHg6iuPa0jfEiV0Epu4rXvT32sdZr2pW+pAHTUWkAfJq8t4YSN9Y5Ov
+        FwEQI2YVAgMBAAECggEATG0VPDOW+MOzMKgabCbIObpeFJK+9mBBMLOwk7KDMl/g
+        zjvrv/FSTLJNiTd8L5si+NhuRCXfjZVB3JhaL4qcbISVT6pLgM86E6sDdcb26Pin
+        J5MgsJpB+vyJBOClz9ftX5RxU97y/aCYpjFY/Mjj84LTFOS055AdilUbnhKRW/wB
+        biwJtbZQ6Zy2KF0Lbb6oCg2oU+yJRQXAsvU9m+hQjax+/XUIwAdMcPcp9yToZ7zO
+        TF2IcCad73qHRrSx+OUNgBpRBW5X9aZ4lYUYBaRUKy7+lbWmPPxT1NvJmAfiIRMp
+        2/L8WbO/lVX49Ju/tvOC2bGn5FGv9IaQvFfqXLX03wKBgQDKBgm0d71KGjLzc0tI
+        NEnXbYfnajpY+996IEiIRdTUEkZFxFj+SrTKoTzW42708K9pDEemEOoegOTt6XGP
+        TBIblXyoW57xVxJ1w5DwFFK867NwtX89H4slOfv8o6t9ssfeCNxiQGsQgrV26YxL
+        L6zWhcf0PUqVWtJtX8hp5feb7wKBgQDHDHb2oB6n2cENfEp8nWd2j96VqlQy+yyx
+        WDMBg5nBpY6UPx+Em90ljeodsK1+W8L8SLvehbHqCPTgUWo2LEvsp1wspajwMt54
+        3np5wQHLG+mfyc9DgGv05MBdDowior82cxbYs/DU5TCHq2vhNqcPjU5tFR/0UNS3
+        F5Bm+xbqOwKBgBZWIJCRhJ5C00tTfglXrqpg89vERPs9rfHEzAA1KFjiRF7GXMiQ
+        3fhhZ2ai8sumKN7Ges2DpT8GJUmgu+uKD555IrVCnAo3BFV87/N7a8JzlP1rM8xA
+        -----END PRIVATE KEY-----
     ports:
       - "8083:8083"
     depends_on:
@@ -133,56 +172,6 @@ services:
     container_name: mfe-mapeo
     ports:
       - "3000:80"
-    networks:
-      - plataforma-network
-    restart: unless-stopped
-  # ============================================
-  # Bucket Imagenes (MiniIO)
-  # ============================================
-  minio-storage:
-    image: minio/minio
-    container_name: minio_local
-    ports:
-      - "9000:9000"       # Puerto para la API (Tu código se conecta aquí)
-      - "9001:9001"       # Puerto para la consola web (Tú entras aquí)
-    environment:
-      MINIO_ROOT_USER: minio_userlog
-      MINIO_ROOT_PASSWORD: minio_passlog
-    volumes:
-      - minio_data:/data
-    command: server /data --console-address ":9001"
-
-    
-  #===========================================================
-  #===== Crear el bucket de manera automática al iniciar =====
-  #===========================================================
-  minio-init:
-    image: minio/mc:latest
-    container_name: minio_configurador
-    depends_on:
-      - minio-storage
-    entrypoint: >
-      /bin/sh -c "
-      until (/usr/bin/mc alias set mials http://minio-storage:9000 minio_userlog minio_passlog); do echo 'Esperando a MinIO...'; sleep 1; done;
-      /usr/bin/mc mb --ignore-existing mials/multimedia-reportes;
-      /usr/bin/mc anonymous set download mials/multimedia-reportes;
-      exit 0;
-      "
-  # ============================================
-  # API Gateway (KrakenD)
-  # ============================================
-  krakend:
-    image: devopsfaith/krakend:latest
-    container_name: krakend
-    volumes:
-      - ./krakend:/etc/krakend
-    ports:
-      - "8080:8080"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.krakend.rule=PathPrefix(`/api`)"
-      - "traefik.http.routers.krakend.entrypoints=web"
-      - "traefik.http.services.krakend.loadbalancer.server.port=8080"
     depends_on:
       - ms-bff
     networks:
@@ -190,28 +179,43 @@ services:
     restart: unless-stopped
 
   # ============================================
-  # Ingress Controller (Traefik)
+  # Object Storage (MinIO)
   # ============================================
-  traefik:
-    image: traefik:latest
-    container_name: traefik
-    command:
-      - --api.insecure=true
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
-      - --entrypoints.web.address=:80
+  minio-storage:
+    image: minio/minio
+    container_name: minio_local
     ports:
-      - "80:80"
-      - "8084:8080" # traefik dashboard
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minio_userlog
+      MINIO_ROOT_PASSWORD: minio_passlog
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - minio_data:/data
+    command: server /data --console-address ":9001"
     networks:
       - plataforma-network
-    restart: unless-stopped
-
 
   # ============================================
-  # Herramientas Opcionales
+  # MinIO Init (Auto-create bucket)
+  # ============================================
+  minio-init:
+    image: minio/mc:latest
+    container_name: minio_configurador
+    depends_on:
+      - minio-storage
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc alias set mials http://minio-storage:9000 minio_userlog minio_passlog); do echo 'Waiting for MinIO...'; sleep 1; done;
+      /usr/bin/mc mb --ignore-existing mials/multimedia-reportes;
+      /usr/bin/mc anonymous set download mials/multimedia-reportes;
+      exit 0;
+      "
+    networks:
+      - plataforma-network
+
+  # ============================================
+  # Optional: pgAdmin
   # ============================================
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -228,14 +232,14 @@ services:
     restart: unless-stopped
 
 # ============================================
-# Volúmenes
+# Volumes
 # ============================================
 volumes:
   postgres_data:
   minio_data:
 
 # ============================================
-# Redes
+# Networks
 # ============================================
 networks:
   plataforma-network:

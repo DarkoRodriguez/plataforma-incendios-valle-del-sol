@@ -1,5 +1,5 @@
 # RSA keys (Security sensitive)
-*.pem
+
 
 # IDEs and OS files
 .idea/

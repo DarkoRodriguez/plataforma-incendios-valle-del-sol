@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-alerts
+  namespace: plataforma-incendios
+  labels:
+    app: ms-alerts
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-alerts
+  template:
+    metadata:
+      labels:
+        app: ms-alerts
+    spec:
+      containers:
+        - name: ms-alerts
+          image: plataforma/ms-alerts:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8083
+              name: http
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/ms_alerts
+            - name: SPRING_DATASOURCE_USERNAME
+              value: postgres
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: postgres
+            - name: SERVER_PORT
+              value: "8083"
+            - name: JWK_SET_URI
+              value: http://ms-usuarios:8081/.well-known/jwks.json
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
