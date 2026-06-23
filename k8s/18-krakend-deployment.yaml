@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: krakend
+  namespace: plataforma-incendios
+  labels:
+    app: krakend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: krakend
+  template:
+    metadata:
+      labels:
+        app: krakend
+    spec:
+      initContainers:
+        - name: wait-for-bff
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z ms-bff 8080; do
+                echo "Waiting for ms-bff..."
+                sleep 2
+              done
+      containers:
+        - name: krakend
+          image: devopsfaith/krakend:2.7
+          imagePullPolicy: IfNotPresent
+          args: ["run", "-c", "/etc/krakend/krakend.json"]
+          ports:
+            - containerPort: 8080
+              name: http
+          volumeMounts:
+            - name: krakend-config
+              mountPath: /etc/krakend/krakend.json
+              subPath: krakend.json
+          readinessProbe:
+            httpGet:
+              path: /__health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /__health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          resources:
+            requests:
+              memory: 64Mi
+              cpu: 50m
+            limits:
+              memory: 256Mi
+              cpu: 300m
+      volumes:
+        - name: krakend-config
+          configMap:
+            name: krakend-config

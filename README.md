@@ -103,7 +103,9 @@ plataforma-incendios-valle-del-sol/
 ├── frontend/
 │   └── mfe-mapeo/     # Microfrontend React + Vite
 ├── init-scripts/      # Scripts SQL para inicializar PostgreSQL
-├── krakend/           # Configuración de gateway alternativa
+├── k8s/               # Manifiestos Kubernetes (despliegue local)
+├── krakend/           # Configuración del API gateway Krakend
+├── scripts/           # Scripts de despliegue (Docker Compose y Kubernetes)
 ├── docker-compose.yml # Orquestación del stack completo
 ├── private_key.pem    # Clave privada JWT (montada en ms-users)
 └── public_key.pem     # Clave pública JWT (montada en ms-users)
@@ -181,30 +183,69 @@ Usa siempre el `docker-compose.yml` de la raíz del proyecto. Los archivos `dock
 - `backend/ms-users/NOTA-DOCKER-CENTRALIZADO.md` - Indicaciones de uso del `docker-compose.yml` central.
 - `docs/extras/Informe Parcial 2 - (ex readme).md` - Contexto de negocio y arquitectura extendida.
 
-## 5.1 Despliegue Kubernetes local (Docker Desktop)
+## 5.1 Despliegue Kubernetes local (kind / Docker Desktop)
 
-Si estás usando Docker Desktop + Kubernetes en Windows 11, el proyecto incluye un script de despliegue que construye las imágenes y aplica los manifiestos usando `kubectl`.
+El stack se despliega en el namespace `plataforma-incendios` con manifiestos planos numerados en `k8s/`. El flujo de tráfico es:
 
-Pasos rápidos:
+**Frontend → Traefik → Krakend → BFF → microservicios**
 
-1. Asegúrate de tener Docker Desktop activado y Kubernetes habilitado.
-2. Copia `.env.example` a `.env` y completa `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y opcionalmente `VAPID_SUBJECT`.
-3. Genera o copia `private_key.pem` y `public_key.pem` en la raíz del repositorio.
-4. Ejecuta el script correspondiente:
-   - Bash/macOS/Linux: `./scripts/deploy-k8s.sh`
-   - PowerShell/Windows: `./scripts/deploy-k8s.ps1`
+### Requisitos
 
-El script crea automáticamente los secretos `ms-usuarios-keys` y `ms-alerts-keys`, luego aplica los recursos en el namespace `plataforma-incendios`.
+- Docker
+- kubectl
+- Helm 3 (para instalar Traefik)
+- kind (solo Linux/macOS si usas kind)
+- `.env` con claves VAPID
+- `private_key.pem` y `public_key.pem` en la raíz del repositorio
 
-URLs de acceso local con NodePort:
+### Linux (kind)
 
-- Frontend: `http://localhost:30080`
-- BFF gateway: `http://localhost:30081`
-- MinIO API: `http://localhost:30090`
-- MinIO Console: `http://localhost:30091`
-- BFF Swagger/OpenAPI: `http://localhost:30081/swagger-ui`
+```bash
+cp .env.example .env   # completar VAPID keys
+./scripts/deploy-k8s.sh --setup-kind
+```
 
-> Nota: `k8s/ingress/ingress.yaml` usa `plataforma.local`. Si deseas usarlo, agrega `127.0.0.1 plataforma.local` a tu archivo `hosts`.
+El flag `--setup-kind` crea el cluster `plataforma` con `kind-config.yaml` (puertos 80/443 mapeados al host).
+
+### Windows (Docker Desktop)
+
+1. Activa Kubernetes en Docker Desktop.
+2. Copia `.env.example` a `.env` y completa las claves VAPID.
+3. Ejecuta:
+
+```powershell
+.\scripts\deploy-k8s.ps1
+```
+
+### URLs de acceso
+
+| Recurso | URL |
+|---------|-----|
+| Aplicación | `http://plataforma.local` o `http://localhost` |
+| Swagger UI | `http://plataforma.local/swagger-ui` |
+| MinIO API | `http://localhost:30090` |
+| MinIO Console | `http://localhost:30091` |
+
+Agrega a tu archivo hosts:
+
+```
+127.0.0.1 plataforma.local
+```
+
+### Estructura de manifiestos
+
+```
+k8s/
+  00-namespace.yaml
+  01-04  postgres
+  05-08  minio (+ job de inicialización)
+  09-16  microservicios y BFF
+  17-19  krakend
+  20-21  frontend
+  22     ingress (Traefik)
+```
+
+Los scripts instalan Traefik automáticamente si no existe, construyen las imágenes `plataforma/*:latest` y cargan imágenes en kind cuando corresponde.
 
 ---
 

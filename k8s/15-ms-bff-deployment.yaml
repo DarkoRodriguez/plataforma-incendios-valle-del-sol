@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-bff
+  namespace: plataforma-incendios
+  labels:
+    app: ms-bff
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-bff
+  template:
+    metadata:
+      labels:
+        app: ms-bff
+    spec:
+      initContainers:
+        - name: wait-for-backends
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              for svc in ms-users:8081 ms-reports:8082 ms-alerts:8083; do
+                host="${svc%%:*}"
+                port="${svc##*:}"
+                until nc -z "$host" "$port"; do
+                  echo "Waiting for $host:$port..."
+                  sleep 2
+                done
+              done
+      containers:
+        - name: ms-bff
+          image: plataforma/ms-bff:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: SERVER_PORT
+              value: "8080"
+            - name: SPRING_APPLICATION_NAME
+              value: ms-bff
+            - name: JWT_ISSUER
+              value: http://ms-users:8081
+            - name: JWK_SET_URI
+              value: http://ms-users:8081/.well-known/jwks.json
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          resources:
+            requests:
+              memory: 256Mi
+              cpu: 100m
+            limits:
+              memory: 512Mi
+              cpu: 500m

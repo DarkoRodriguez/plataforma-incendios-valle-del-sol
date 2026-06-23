@@ -2,25 +2,37 @@
 set -euo pipefail
 
 NS=plataforma-incendios
-kubectl create namespace ${NS} || true
 
-# Create ms-usuarios keys from files (adjust paths)
-if [ -f ./private_key.pem ] && [ -f ./public_key.pem ]; then
-  kubectl -n ${NS} create secret generic ms-usuarios-keys --from-file=private_key.pem=./private_key.pem --from-file=public_key.pem=./public_key.pem || true
-  echo "Created secret ms-usuarios-keys"
+echo "This script is optional. Prefer ./scripts/deploy-k8s.sh which creates secrets automatically."
+echo "Creating namespace ${NS}..."
+kubectl apply -f k8s/00-namespace.yaml
+
+if [[ -f ./private_key.pem && -f ./public_key.pem ]]; then
+  kubectl create secret generic ms-usuarios-keys \
+    --from-file=private_key.pem=./private_key.pem \
+    --from-file=public_key.pem=./public_key.pem \
+    -n "${NS}" --dry-run=client -o yaml | kubectl apply -f -
+  echo "Applied secret ms-usuarios-keys"
 else
-  echo "Warning: private_key.pem/public_key.pem not found in project root. Create ms-usuarios-keys secret manually."
+  echo "Warning: private_key.pem/public_key.pem not found in project root."
 fi
 
-# Create ms-alerts secret using environment variables or manual replacement
-read -p "VAPID_PUBLIC_KEY (or leave empty to skip): " VAPID_PUBLIC_KEY
-read -p "VAPID_PRIVATE_KEY (or leave empty to skip): " VAPID_PRIVATE_KEY
-read -p "VAPID_SUBJECT (or leave empty to skip): " VAPID_SUBJECT
+if [[ -f ./.env ]]; then
+  VAPID_PUBLIC_KEY="$(grep -E '^[[:space:]]*VAPID_PUBLIC_KEY=' .env | tail -n 1 | cut -d'=' -f2-)"
+  VAPID_PRIVATE_KEY="$(grep -E '^[[:space:]]*VAPID_PRIVATE_KEY=' .env | tail -n 1 | cut -d'=' -f2-)"
+  VAPID_SUBJECT="$(grep -E '^[[:space:]]*VAPID_SUBJECT=' .env | tail -n 1 | cut -d'=' -f2-)"
+  VAPID_SUBJECT="${VAPID_SUBJECT:-mailto:admin@example.com}"
 
-if [ -n "${VAPID_PUBLIC_KEY}" ] && [ -n "${VAPID_PRIVATE_KEY}" ]; then
-  kubectl -n ${NS} create secret generic ms-alerts-keys --from-literal=VAPID_PUBLIC_KEY="${VAPID_PUBLIC_KEY}" --from-literal=VAPID_PRIVATE_KEY="${VAPID_PRIVATE_KEY}" --from-literal=VAPID_SUBJECT="${VAPID_SUBJECT}" || true
-  echo "Created secret ms-alerts-keys"
+  if [[ -n "${VAPID_PUBLIC_KEY}" && -n "${VAPID_PRIVATE_KEY}" ]]; then
+    kubectl create secret generic ms-alerts-keys \
+      --from-literal=VAPID_PUBLIC_KEY="${VAPID_PUBLIC_KEY}" \
+      --from-literal=VAPID_PRIVATE_KEY="${VAPID_PRIVATE_KEY}" \
+      --from-literal=VAPID_SUBJECT="${VAPID_SUBJECT}" \
+      -n "${NS}" --dry-run=client -o yaml | kubectl apply -f -
+    echo "Applied secret ms-alerts-keys"
+  else
+    echo "Skipped ms-alerts-keys: set VAPID keys in .env"
+  fi
 else
-  echo "Skipped creating ms-alerts-keys. You can apply k8s/ms-alerts-secret.yaml after replacing placeholders."
+  echo "Skipped ms-alerts-keys: .env not found"
 fi
-

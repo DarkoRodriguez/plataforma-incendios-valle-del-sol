@@ -3,14 +3,15 @@
   "version": 3,
   "name": "Plataforma API Gateway",
   "port": 8080,
-  "timeout": "3000ms",
-  "cache_ttl": "300s",
+  "timeout": "30s",
+  "cache_ttl": "0s",
   "output_encoding": "json",
   "extra_config": {
     "security/cors": {
       "allow_origins": [
+        "http://localhost",
         "http://localhost:3000",
-        "http://localhost"
+        "http://plataforma.local"
       ],
       "allow_methods": [
         "GET",
@@ -33,122 +34,111 @@
   },
   "endpoints": [
     {
-      "endpoint": "/api/usuarios/auth/login",
+      "endpoint": "/api/users/auth/login",
       "method": "POST",
-      "input_headers": [
-        "Content-Type"
-      ],
-      "backend": [
-        {
-          "url_pattern": "/api/usuarios/auth/login",
-          "host": [
-            "http://ms-bff:8080"
-          ]
-        }
-      ]
+      "input_headers": ["Content-Type"],
+      "backend": [{ "url_pattern": "/api/users/auth/login", "host": ["http://ms-bff:8080"] }]
     },
     {
-      "endpoint": "/api/usuarios/auth/register",
+      "endpoint": "/api/users/auth/register",
       "method": "POST",
-      "input_headers": [
-        "Content-Type"
-      ],
-      "backend": [
-        {
-          "url_pattern": "/api/usuarios/auth/register",
-          "host": [
-            "http://ms-bff:8080"
-          ]
-        }
-      ]
+      "input_headers": ["Content-Type"],
+      "backend": [{ "url_pattern": "/api/users/auth/register", "host": ["http://ms-bff:8080"] }]
     },
     {
-      "endpoint": "/api/mapeo/reportes",
+      "endpoint": "/api/users",
       "method": "GET",
       "output_encoding": "no-op",
-      "backend": [
-        {
-          "url_pattern": "/api/mapeo/reportes",
-          "host": [
-            "http://ms-bff:8080"
-          ]
-        }
-      ]
+      "input_headers": ["Authorization"],
+      "backend": [{ "url_pattern": "/api/users", "encoding": "no-op", "host": ["http://ms-bff:8080"] }]
     },
     {
-      "endpoint": "/api/mapeo/reportes",
+      "endpoint": "/api/users/{id}",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "input_headers": ["Authorization"],
+      "backend": [{ "url_pattern": "/api/users/{id}", "encoding": "no-op", "host": ["http://ms-bff:8080"] }]
+    },
+    {
+      "endpoint": "/api/users/{id}",
+      "method": "PUT",
+      "input_headers": ["Authorization", "Content-Type"],
+      "backend": [{ "url_pattern": "/api/users/{id}", "host": ["http://ms-bff:8080"] }]
+    },
+    {
+      "endpoint": "/api/users/{id}/role",
+      "method": "PUT",
+      "input_headers": ["Authorization", "Content-Type"],
+      "backend": [{ "url_pattern": "/api/users/{id}/role", "host": ["http://ms-bff:8080"] }]
+    },
+    {
+      "endpoint": "/api/reports",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "backend": [{ "url_pattern": "/api/reports", "encoding": "no-op", "host": ["http://ms-bff:8080"] }]
+    },
+    {
+      "endpoint": "/api/reports",
       "method": "POST",
-      "input_headers": [
-        "Authorization",
-        "Content-Type"
-      ],
-      "backend": [
-        {
-          "url_pattern": "/api/mapeo/reportes",
-          "host": [
-            "http://ms-bff:8080"
-          ]
-        }
-      ]
+      "input_headers": ["Content-Type"],
+      "backend": [{ "url_pattern": "/api/reports", "host": ["http://ms-bff:8080"] }]
     },
     {
-      "endpoint": "/api/mapeo/reportes/{id}/estado",
+      "endpoint": "/api/reports/upload",
+      "method": "POST",
+      "output_encoding": "no-op",
+      "input_headers": ["Content-Type", "Authorization"],
+      "backend": [{ "url_pattern": "/api/reports/upload", "encoding": "no-op", "host": ["http://ms-bff:8080"] }]
+    },
+    {
+      "endpoint": "/api/reports/{id}/status",
       "method": "PUT",
-      "input_headers": [
-        "Authorization",
-        "Content-Type"
-      ],
-      "backend": [
-        {
-          "url_pattern": "/api/mapeo/reportes/{id}/estado",
-          "host": [
-            "http://ms-bff:8080"
-          ]
-        }
-      ]
+      "input_headers": ["Authorization", "Content-Type"],
+      "backend": [{ "url_pattern": "/api/reports/{id}/status", "host": ["http://ms-bff:8080"] }]
     },
     {
-      "endpoint": "/api/usuarios/users/{id}",
+      "endpoint": "/api/reports/statistics/count",
       "method": "GET",
-      "input_headers": [
-        "Authorization"
-      ],
-      "backend": [
-        {
-          "url_pattern": "/api/usuarios/users/{id}",
-          "host": [
-            "http://ms-bff:8080"
-          ]
-        }
-      ]
+      "output_encoding": "no-op",
+      "backend": [{ "url_pattern": "/api/reports/statistics/count", "encoding": "no-op", "host": ["http://ms-bff:8080"] }]
     },
     {
-      "endpoint": "/api/usuarios/users/{id}",
-      "method": "PUT",
-      "input_headers": [
-        "Authorization",
-        "Content-Type"
-      ],
-      "backend": [
-        {
-          "url_pattern": "/api/usuarios/users/{id}",
-          "host": [
-            "http://ms-bff:8080"
-          ]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/mapeo/{id}",
+      "endpoint": "/api/alerts",
       "method": "GET",
-      "backend": [
-        {
-          "url_pattern": "/api/mapeo/{id}",
-          "host": [
-            "http://ms-bff:8080"
-          ]
-        }
-      ]
+      "output_encoding": "no-op",
+      "backend": [{ "url_pattern": "/api/alerts", "encoding": "no-op", "host": ["http://ms-bff:8080"] }]
+    },
+    {
+      "endpoint": "/api/alerts",
+      "method": "POST",
+      "input_headers": ["Authorization", "Content-Type"],
+      "backend": [{ "url_pattern": "/api/alerts", "host": ["http://ms-bff:8080"] }]
+    },
+    {
+      "endpoint": "/api/alerts/stream",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "timeout": "86400s",
+      "input_headers": ["*"],
+      "backend": [{ "url_pattern": "/api/alerts/stream", "encoding": "no-op", "host": ["http://ms-bff:8080"] }]
+    },
+    {
+      "endpoint": "/api/alerts/subscriptions",
+      "method": "POST",
+      "input_headers": ["Content-Type"],
+      "backend": [{ "url_pattern": "/api/alerts/subscriptions", "host": ["http://ms-bff:8080"] }]
+    },
+    {
+      "endpoint": "/api/alerts/unsubscribe",
+      "method": "POST",
+      "input_headers": ["Content-Type"],
+      "backend": [{ "url_pattern": "/api/alerts/unsubscribe", "host": ["http://ms-bff:8080"] }]
+    },
+    {
+      "endpoint": "/api/health",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "backend": [{ "url_pattern": "/api/health", "encoding": "no-op", "host": ["http://ms-bff:8080"] }]
     }
   ]
 }

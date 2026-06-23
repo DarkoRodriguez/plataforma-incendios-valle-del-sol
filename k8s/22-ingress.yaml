@@ -3,13 +3,45 @@ kind: Ingress
 metadata:
   name: plataforma-ingress
   namespace: plataforma-incendios
+  labels:
+    app.kubernetes.io/part-of: plataforma-incendios
   annotations:
-    kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   ingressClassName: traefik
   rules:
     - host: plataforma.local
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: krakend
+                port:
+                  number: 8080
+          - path: /swagger-ui
+            pathType: Prefix
+            backend:
+              service:
+                name: ms-bff
+                port:
+                  number: 8080
+          - path: /v3/api-docs
+            pathType: Prefix
+            backend:
+              service:
+                name: ms-bff
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mfe-mapeo
+                port:
+                  number: 80
+    - host: localhost
       http:
         paths:
           - path: /api
