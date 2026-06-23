@@ -1,9 +1,23 @@
 -- Crear bases de datos para cada microservicio
 CREATE DATABASE ms_usuarios;
 CREATE DATABASE ms_mapeo;
+CREATE DATABASE ms_alerts;
 CREATE DATABASE demo_db;
+
+-- Conectar a cada base para inicializarla
+\connect ms_usuarios
+
+\connect ms_mapeo
+CREATE EXTENSION IF NOT EXISTS postgis;
+
+\connect ms_alerts
+
+\connect demo_db
+
+\connect postgres
 
 -- Asignar permisos
 GRANT ALL PRIVILEGES ON DATABASE ms_usuarios TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE ms_mapeo TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE ms_alerts TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE demo_db TO postgres;

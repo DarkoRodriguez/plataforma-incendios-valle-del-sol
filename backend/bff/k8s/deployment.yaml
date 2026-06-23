@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-bff
+  namespace: plataforma-incendios
+  labels:
+    app: ms-bff
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-bff
+  template:
+    metadata:
+      labels:
+        app: ms-bff
+    spec:
+      containers:
+        - name: ms-bff
+          image: plataforma/ms-bff:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: SERVER_PORT
+              value: "8080"
+            - name: SPRING_APPLICATION_NAME
+              value: ms-bff
+            - name: JWT_ISSUER
+              value: http://ms-usuarios:8081
+            - name: JWK_SET_URI
+              value: http://ms-usuarios:8081/.well-known/jwks.json
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
