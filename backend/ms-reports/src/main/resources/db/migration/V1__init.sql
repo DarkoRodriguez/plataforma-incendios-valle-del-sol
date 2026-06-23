@@ -13,16 +13,14 @@ CREATE TABLE IF NOT EXISTS fire_reports (
     media_url VARCHAR(500)
 );
 
--- Crear procedimiento almacenado para obtener la cantidad de reportes activos por tipo
-CREATE OR REPLACE PROCEDURE get_active_reports_count_by_type(
-    IN p_type VARCHAR,
-    OUT p_count INT
+-- Crear función para obtener la cantidad de reportes activos por tipo
+CREATE OR REPLACE FUNCTION get_active_reports_count_by_type(
+    report_type VARCHAR
 )
-LANGUAGE plpgsql
+RETURNS INT
+LANGUAGE sql
 AS $$
-BEGIN
-    SELECT COUNT(*) INTO p_count
-    FROM fire_reports
-    WHERE type = p_type AND status = 'ACTIVO';
-END;
+    SELECT COUNT(*) FROM fire_reports
+    WHERE fire_reports.type = report_type
+      AND status = 'ACTIVO';
 $$;

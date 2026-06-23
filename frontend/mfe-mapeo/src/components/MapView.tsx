@@ -79,10 +79,10 @@ export const MapView: React.FC<MapViewProps> = ({
     currentUser.role === 'BRIGADIST' || currentUser.role === 'ADMINISTRATOR'
   );
 
-  // Mock Active Brigades
+  // Mock Brigadas activas
   const brigades = [
-    { id: 1, name: 'Forest Brigade Delta', lat: -33.4350, lng: -70.6550, status: 'On Patrol' },
-    { id: 2, name: 'Central Brigade Sol', lat: -33.4680, lng: -70.6900, status: 'On Site' },
+    { id: 1, name: 'Brigada Forestal Delta', lat: -33.4350, lng: -70.6550, status: 'En patrulla' },
+    { id: 2, name: 'Brigada Central Sol', lat: -33.4680, lng: -70.6900, status: 'En sitio' },
   ];
 
   // Mock Evacuation Routes
@@ -95,8 +95,8 @@ export const MapView: React.FC<MapViewProps> = ({
 
   // Mock Risk Zones
   const riskZones = [
-    { id: 1, name: 'North Ridge Risk Area', lat: -33.4150, lng: -70.6250, radius: 1200 },
-    { id: 2, name: 'South Forest Border Interface', lat: -33.4850, lng: -70.7150, radius: 900 },
+    { id: 1, name: 'Zona de riesgo cerro norte', lat: -33.4150, lng: -70.6250, radius: 1200 },
+    { id: 2, name: 'Zona de riesgo borde sur del bosque', lat: -33.4850, lng: -70.7150, radius: 900 },
   ];
 
   const renderMedia = (url?: string) => {
@@ -104,7 +104,7 @@ export const MapView: React.FC<MapViewProps> = ({
     const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg)$/) || url.includes('video');
     return (
       <div style={{ marginTop: '10px' }}>
-        <strong style={{ fontSize: '11px', display: 'block', marginBottom: '4px' }}>Attachment:</strong>
+        <strong style={{ fontSize: '11px', display: 'block', marginBottom: '4px' }}>Adjunto:</strong>
         {isVideo ? (
           <video src={url} controls style={{ width: '100%', maxHeight: '120px', borderRadius: '6px', backgroundColor: '#000' }} />
         ) : (
@@ -119,7 +119,7 @@ export const MapView: React.FC<MapViewProps> = ({
     <div className="map-container">
       {isReporting && (
         <div className="report-tooltip">
-          Click anywhere on the map to pin the fire focus
+          Haz clic en el mapa para ubicar el foco de incendio
         </div>
       )}
       <MapContainer center={defaultCenter} zoom={12} style={{ width: '100%', height: '100%' }}>
@@ -131,7 +131,7 @@ export const MapView: React.FC<MapViewProps> = ({
         <MapClickHandler isReporting={isReporting} onLocationSelected={onLocationSelected} />
 
         <LayersControl position="topright">
-          <LayersControl.Overlay checked name="Fire Reports">
+          <LayersControl.Overlay checked name="Reportes de incendios">
             <LayerGroup>
               {reports.map((report) => (
                 <Marker
@@ -141,31 +141,31 @@ export const MapView: React.FC<MapViewProps> = ({
                 >
                   <Popup>
                     <div style={{ minWidth: '220px' }}>
-                      <strong style={{ fontSize: '14px', color: '#ff4757' }}>Fire Report Details</strong>
+                      <strong style={{ fontSize: '14px', color: '#ff4757' }}>Detalles del reporte</strong>
                       <hr style={{ margin: '8px 0', borderColor: 'rgba(255,255,255,0.1)' }} />
-                      <strong>Type:</strong> {report.type} <br />
-                      <strong>Status:</strong> <span style={{
+                      <strong>Tipo:</strong> {report.type === 'FORESTAL' ? 'Forestal' : report.type === 'ESTRUCTURAL' ? 'Estructural' : report.type === 'VEHICULAR' ? 'Vehicular' : report.type} <br />
+                      <strong>Estado:</strong> <span style={{
                         color: report.status === 'ACTIVE' ? '#ff4757' : report.status === 'CONTROLLED' ? '#ffa502' : '#2ed573',
                         fontWeight: 'bold'
-                      }}>{report.status}</span> <br />
-                      <strong>Description:</strong> {report.description} <br />
+                      }}>{report.status === 'ACTIVE' ? 'ACTIVO' : report.status === 'CONTROLLED' ? 'CONTROLADO' : report.status === 'EXTINGUISHED' ? 'EXTINTO' : report.status}</span> <br />
+                      <strong>Descripción:</strong> {report.description} <br />
                       <small style={{ color: '#aaa' }}>
-                        Date: {report.reportDate ? new Date(report.reportDate).toLocaleString() : 'N/A'}
+                        Fecha: {report.reportDate ? new Date(report.reportDate).toLocaleString() : 'N/D'}
                       </small>
                       {renderMedia(report.mediaUrl)}
                       {isBrigadistaOrAdmin && report.id !== undefined && (
                         <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                           <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
-                            Update Status:
+                            Actualizar estado:
                           </label>
                           <select
                             value={report.status}
                             onChange={(e) => onStatusChange(report.id!, e.target.value)}
                             style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.2)', backgroundColor: '#1e272e', color: '#fff', fontSize: '12px', cursor: 'pointer' }}
                           >
-                            <option value="ACTIVE">ACTIVE</option>
-                            <option value="CONTROLLED">CONTROLLED</option>
-                            <option value="EXTINGUISHED">EXTINGUISHED</option>
+                            <option value="ACTIVE">ACTIVO</option>
+                            <option value="CONTROLLED">CONTROLADO</option>
+                            <option value="EXTINGUISHED">EXTINTO</option>
                           </select>
                         </div>
                       )}
@@ -176,15 +176,15 @@ export const MapView: React.FC<MapViewProps> = ({
             </LayerGroup>
           </LayersControl.Overlay>
 
-          <LayersControl.Overlay checked name="Active Brigades">
+          <LayersControl.Overlay checked name="Brigadas activas">
             <LayerGroup>
               {brigades.map((b) => (
                 <Marker key={b.id} position={[b.lat, b.lng]} icon={blueIcon}>
                   <Popup>
                     <div>
                       <strong style={{ color: '#70a1ff' }}>{b.name}</strong> <br />
-                      <strong>Status:</strong> {b.status} <br />
-                      <small style={{ color: '#bbb' }}>GPS position active</small>
+                      <strong>Estado:</strong> {b.status} <br />
+                      <small style={{ color: '#bbb' }}>Posición GPS activa</small>
                     </div>
                   </Popup>
                 </Marker>
@@ -192,18 +192,18 @@ export const MapView: React.FC<MapViewProps> = ({
             </LayerGroup>
           </LayersControl.Overlay>
 
-          <LayersControl.Overlay checked name="Evacuation Routes">
+          <LayersControl.Overlay checked name="Rutas de evacuación">
             <LayerGroup>
               <Polyline positions={routeNorth} pathOptions={{ color: '#2ed573', weight: 5, dashArray: '8, 8' }}>
-                <Popup><strong style={{ color: '#2ed573' }}>Northern Evacuation Route</strong></Popup>
+                <Popup><strong style={{ color: '#2ed573' }}>Ruta de evacuación norte</strong></Popup>
               </Polyline>
               <Polyline positions={routeSouth} pathOptions={{ color: '#2ed573', weight: 5, dashArray: '8, 8' }}>
-                <Popup><strong style={{ color: '#2ed573' }}>Southern Evacuation Route</strong></Popup>
+                <Popup><strong style={{ color: '#2ed573' }}>Ruta de evacuación sur</strong></Popup>
               </Polyline>
             </LayerGroup>
           </LayersControl.Overlay>
 
-          <LayersControl.Overlay checked name="Wildfire Risk Zones">
+          <LayersControl.Overlay checked name="Zonas de riesgo de incendio">
             <LayerGroup>
               {riskZones.map((zone) => (
                 <Circle
@@ -214,8 +214,8 @@ export const MapView: React.FC<MapViewProps> = ({
                 >
                   <Popup>
                     <strong style={{ color: '#ff4757' }}>{zone.name}</strong> <br />
-                    <strong>Radius:</strong> {zone.radius}m <br />
-                    <span style={{ color: '#ff7f50' }}>High vegetation density risk area.</span>
+                    <strong>Radio:</strong> {zone.radius}m <br />
+                    <span style={{ color: '#ff7f50' }}>Zona de alto riesgo por vegetación densa.</span>
                   </Popup>
                 </Circle>
               ))}

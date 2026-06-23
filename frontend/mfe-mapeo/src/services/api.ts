@@ -239,3 +239,44 @@ export async function updateUserRole(id: number, role: string, token: string): P
     return null;
   }
 }
+
+// ----------------------------------------------------
+// PUSH NOTIFICATION SERVICES
+// ----------------------------------------------------
+
+export interface PushSubscriptionDTO {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  region?: string;
+  commune?: string;
+}
+
+export async function registerPushSubscription(subscription: PushSubscriptionDTO): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/alerts/subscriptions`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(subscription),
+    });
+    return res.ok;
+  } catch (e) {
+    console.error('RegisterPushSubscription error', e);
+    return false;
+  }
+}
+
+export async function unregisterPushSubscription(endpoint: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/alerts/unsubscribe`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ endpoint }),
+    });
+    return res.ok;
+  } catch (e) {
+    console.error('UnregisterPushSubscription error', e);
+    return false;
+  }
+}
+

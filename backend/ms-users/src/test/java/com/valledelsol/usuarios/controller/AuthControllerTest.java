@@ -13,7 +13,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
@@ -26,9 +25,6 @@ class AuthControllerTest {
 
     @Mock
     private UserService userService;
-
-    @Mock
-    private PasswordEncoder passwordEncoder;
 
     @Mock
     private JwtService jwtService;
@@ -49,12 +45,11 @@ class AuthControllerTest {
         req.setEmail("newuser@mail.com");
         req.setRole("USER");
 
-        when(userService.findByUsername("newuser")).thenReturn(Optional.empty());
-        when(passwordEncoder.encode("passwd")).thenReturn("encoded-pwd");
+        when(userService.registerUser(any(RegisterRequest.class))).thenReturn(new User());
 
         ResponseEntity<Void> response = authController.register(req);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        verify(userService, times(1)).save(any(User.class));
+        verify(userService, times(1)).registerUser(any(RegisterRequest.class));
     }
 
     @Test
@@ -63,12 +58,12 @@ class AuthControllerTest {
         req.setUsername("newuser");
         req.setPassword("passwd");
 
-        User existingUser = new User();
-        when(userService.findByUsername("newuser")).thenReturn(Optional.of(existingUser));
+        when(userService.registerUser(any(RegisterRequest.class)))
+                .thenThrow(new IllegalArgumentException("Nombre de usuario ya existe"));
 
         ResponseEntity<Void> response = authController.register(req);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        verify(userService, never()).save(any(User.class));
+        verify(userService, times(1)).registerUser(any(RegisterRequest.class));
     }
 
     @Test
@@ -82,8 +77,7 @@ class AuthControllerTest {
         mockUser.setEmail("loginuser@mail.com");
         mockUser.setRole("USER");
 
-        when(userService.findByUsername("loginuser")).thenReturn(Optional.of(mockUser));
-        when(passwordEncoder.matches("password123", "encoded-pwd")).thenReturn(true);
+        when(userService.authenticate(req)).thenReturn(Optional.of(mockUser));
         when(jwtService.generateAccessToken(mockUser)).thenReturn("fake-jwt-token");
 
         ResponseEntity<AuthResponseDTO> response = authController.login(req);
@@ -99,10 +93,7 @@ class AuthControllerTest {
         req.setUsername("loginuser");
         req.setPassword("wrongpassword");
 
-        User mockUser = new User("loginuser", "encoded-pwd");
-
-        when(userService.findByUsername("loginuser")).thenReturn(Optional.of(mockUser));
-        when(passwordEncoder.matches("wrongpassword", "encoded-pwd")).thenReturn(false);
+        when(userService.authenticate(req)).thenReturn(Optional.empty());
 
         ResponseEntity<AuthResponseDTO> response = authController.login(req);
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());

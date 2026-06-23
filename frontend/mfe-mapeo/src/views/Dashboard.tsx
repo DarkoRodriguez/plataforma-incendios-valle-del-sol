@@ -49,7 +49,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ currentUser, onReportsUpda
       }
     } catch (e) {
       console.error(e);
-      setError('Error loading dashboard data');
+      setError('Error al cargar los datos del panel');
     } finally {
       setLoading(false);
     }
@@ -76,7 +76,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ currentUser, onReportsUpda
       }
     } catch (e) {
       console.error(e);
-      alert('Failed to update report status.');
+      alert('No se pudo actualizar el estado del reporte.');
     }
   };
 
@@ -95,7 +95,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ currentUser, onReportsUpda
       }
     } catch (e) {
       console.error(e);
-      alert('Failed to update user role');
+      alert('No se pudo actualizar el rol del usuario');
     }
   };
 
@@ -149,6 +149,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ currentUser, onReportsUpda
                     <th>ID</th>
                     <th>Tipo</th>
                     <th>Estado</th>
+                    <th>Región</th>
+                    <th>Comuna</th>
                     <th>Descripción</th>
                     <th>Coordenadas</th>
                     <th>Fecha</th>
@@ -162,15 +164,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ currentUser, onReportsUpda
                       <td>{report.id}</td>
                       <td>
                         <span className={`badge type-${report.type.toLowerCase()}`}>
-                          {report.type}
+                          {report.type === 'FORESTAL' ? 'Forestal' : report.type === 'ESTRUCTURAL' ? 'Estructural' : report.type === 'VEHICULAR' ? 'Vehicular' : 'Otro'}
                         </span>
                       </td>
                       <td>
                         <span className={`status-dot ${report.status.toLowerCase()}`} />
                         <span className={`status-text ${report.status.toLowerCase()}`}>
-                          {report.status}
+                          {report.status === 'ACTIVE' ? 'ACTIVO' : report.status === 'CONTROLLED' ? 'CONTROLADO' : report.status === 'EXTINGUISHED' ? 'EXTINTO' : report.status}
                         </span>
                       </td>
+                      <td>{report.region || 'N/D'}</td>
+                      <td>{report.commune || 'N/D'}</td>
                       <td className="description-cell">{report.description}</td>
                       <td>
                         {report.latitude.toFixed(4)}, {report.longitude.toFixed(4)}
@@ -209,7 +213,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ currentUser, onReportsUpda
                   ))}
                   {reports.length === 0 && (
                     <tr>
-                      <td colSpan={8} style={{ textAlign: 'center', color: '#888' }}>
+                      <td colSpan={10} style={{ textAlign: 'center', color: '#888' }}>
                         Aún no se han enviado reportes de focos de incendio.
                       </td>
                     </tr>
@@ -239,13 +243,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ currentUser, onReportsUpda
                     <tr key={u.id}>
                       <td>{u.id}</td>
                       <td style={{ fontWeight: 'bold' }}>{u.username}</td>
-                      <td>{u.email || 'N/A'}</td>
-                      <td>{u.phone || 'N/A'}</td>
-                      <td>{u.region || 'N/A'}</td>
-                      <td>{u.commune || 'N/A'}</td>
+                      <td>{u.email || 'N/D'}</td>
+                      <td>{u.phone || 'N/D'}</td>
+                      <td>{u.region || 'N/D'}</td>
+                      <td>{u.commune || 'N/D'}</td>
                       <td>
                         <span className={`role-badge ${u.role.toLowerCase()}`}>
-                          {u.role}
+                          {u.role === 'ADMINISTRATOR' ? 'Administrador' : u.role === 'BRIGADIST' ? 'Brigadista' : 'Usuario estándar'}
                         </span>
                       </td>
                       <td>

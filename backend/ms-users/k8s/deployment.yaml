@@ -31,6 +31,18 @@ spec:
               value: postgres
             - name: SERVER_PORT
               value: "8081"
+            - name: JWT_ISSUER
+              value: http://ms-usuarios:8081
+            - name: JWK_SET_URI
+              value: http://ms-usuarios:8081/.well-known/jwks.json
+            - name: JWT_PRIVATE_KEY_PATH
+              value: /run/keys/private_key.pem
+            - name: JWT_PUBLIC_KEY_PATH
+              value: /run/keys/public_key.pem
+          volumeMounts:
+            - name: jwt-keys
+              mountPath: /run/keys
+              readOnly: true
           resources:
             limits:
               memory: "512Mi"
@@ -38,3 +50,12 @@ spec:
             requests:
               memory: "256Mi"
               cpu: "100m"
+      volumes:
+        - name: jwt-keys
+          secret:
+            secretName: ms-usuarios-keys
+            items:
+              - key: private_key.pem
+                path: private_key.pem
+              - key: public_key.pem
+                path: public_key.pem

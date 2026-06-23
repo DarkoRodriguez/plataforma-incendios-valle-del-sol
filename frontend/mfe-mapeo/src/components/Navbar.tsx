@@ -84,7 +84,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className={`nav-tab ${currentView === 'dashboard' ? 'active' : ''}`}
               onClick={() => setCurrentView('dashboard')}
             >
-              Dashboard
+              Panel
             </button>
           </div>
         )}
@@ -102,14 +102,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             {dropdownOpen && (
               <div className="avatar-dropdown">
                 <div className="dropdown-header">
-                  Hello, <b>{user.username}</b>
-                  <div className="dropdown-role">{user.role}</div>
+                  Hola, <b>{user.username}</b>
+                  <div className="dropdown-role">{user.role === 'ADMINISTRATOR' ? 'Administrador' : user.role === 'BRIGADIST' ? 'Brigadista' : 'Usuario'}</div>
                 </div>
                 <button className="dropdown-item" onClick={() => {
                   setDropdownOpen(false);
                   onEditProfileClick();
-                }}>Edit Profile</button>
-                <button className="dropdown-item logout-btn" onClick={handleLogout}>Sign Out</button>
+                }}>Editar perfil</button>
+                <button className="dropdown-item logout-btn" onClick={handleLogout}>Cerrar sesión</button>
               </div>
             )}
           </div>

@@ -117,6 +117,12 @@ minio:
   secretKey: ${MINIO_SECRET_KEY:minio_passlog}
   bucketName: ${MINIO_BUCKET:multimedia-reportes}
   externalUrl: ${MINIO_EXTERNAL_URL:http://localhost:9000}
+```
+
+## Swagger / OpenAPI
+
+- Swagger UI: `http://localhost:8082/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8082/api/reports/v3/api-docs`
 
 security.jwt.jwks-url: ${JWK_SET_URI:http://ms-usuarios:8081/.well-known/jwks.json}
 ```
@@ -127,4 +133,15 @@ security.jwt.jwks-url: ${JWK_SET_URI:http://ms-usuarios:8081/.well-known/jwks.js
 ./mvnw test
 ```
 
-Prueba principal: `FireReportServiceTest`.
+Pruebas principales:
+- `FireReportServiceTest`: valida la lógica de reporte y actualización de estado.
+- `FireReportControllerTest`: verifica los endpoints REST de reportes.
+- `MinioServiceTest`: comprueba la integración con almacenamiento de archivos.
+- `JwtUtilTest`: valida el parseo de JWT para la autenticación.
+
+Cobertura general:
+- INSTRUCTION: 73.5%
+- BRANCH: 47.7%
+- LINE: 75.3%
+
+Fuente de análisis: `target/site/jacoco/jacoco.xml`

@@ -33,6 +33,9 @@ spec:
               value: "8083"
             - name: JWK_SET_URI
               value: http://ms-usuarios:8081/.well-known/jwks.json
+          envFrom:
+            - secretRef:
+                name: ms-alerts-keys
           resources:
             limits:
               memory: "512Mi"

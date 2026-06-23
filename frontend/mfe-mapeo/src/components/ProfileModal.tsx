@@ -20,6 +20,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ user, onClose, onUpd
 
   const communes = region ? COMMUNES_BY_REGION[region] : [];
 
+  const displayRole = user.role === 'ADMINISTRATOR'
+    ? 'Administrador'
+    : user.role === 'BRIGADIST'
+      ? 'Brigadista'
+      : 'Usuario estándar';
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -27,7 +33,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ user, onClose, onUpd
 
     const token = localStorage.getItem('token');
     if (!token) {
-      setError('Session expired. Please log in again.');
+      setError('Sesión expirada. Por favor, inicia sesión nuevamente.');
       return;
     }
 
@@ -47,16 +53,16 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ user, onClose, onUpd
       const updatedUser = await updateUser(user.id, payload, token);
       if (updatedUser) {
         localStorage.setItem('user', JSON.stringify(updatedUser));
-        setSuccess('Profile updated successfully');
+        setSuccess('Perfil actualizado correctamente');
         setTimeout(() => {
           onUpdateSuccess(updatedUser);
         }, 1500);
       } else {
-        setError('Failed to update profile');
+        setError('No se pudo actualizar el perfil');
       }
     } catch (err) {
       console.error("Error updating profile", err);
-      setError('An error occurred while updating profile');
+      setError('Ocurrió un error al actualizar el perfil');
     }
   };
 
@@ -69,7 +75,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ user, onClose, onUpd
         
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Username</label>
+            <label>Usuario</label>
             <input 
               type="text" 
               value={username} 
@@ -79,7 +85,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ user, onClose, onUpd
           </div>
           
           <div className="form-group">
-            <label>New Password (leave blank to keep current)</label>
+            <label>Nueva contraseña (dejar en blanco para conservar la actual)</label>
             <input 
               type="password" 
               value={password} 
@@ -141,10 +147,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ user, onClose, onUpd
           </div>
 
           <div className="form-group">
-            <label>Role (Not editable)</label>
+            <label>Rol (no editable)</label>
             <input 
               type="text" 
-              value={user.role || 'USER'} 
+              value={displayRole} 
               disabled 
               style={{
                 width: '100%',

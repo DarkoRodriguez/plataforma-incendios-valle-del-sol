@@ -75,10 +75,26 @@ JWT_PUBLIC_KEY_PATH: /run/keys/public_key.pem
 JWT_ISSUER: http://ms-usuarios:8081
 ```
 
+## Swagger / OpenAPI
+
+- Swagger UI: `http://localhost:8081/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8081/api/users/v3/api-docs`
+
 ## Pruebas
 
 ```bash
 ./mvnw test
 ```
 
-Pruebas principales: `UserControllerTest`, `AuthControllerTest`.
+Pruebas principales:
+- `UserControllerTest`: valida los endpoints de usuario y roles.
+- `AuthControllerTest`: comprueba los flujos de registro y login JWT.
+- `UserServiceTest`: cubre la lógica de registro, actualización y autorizaciones.
+- `JwtUtilTest` / `JwtServiceTest`: validan la lectura de JWKS y la generación de tokens.
+
+Cobertura general:
+- INSTRUCTION: 86.5%
+- BRANCH: 84.7%
+- LINE: 85.0%
+
+Fuente de análisis: `target/site/jacoco/jacoco.xml`

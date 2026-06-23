@@ -1,5 +1,6 @@
 package com.valledelsol.alerts.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.valledelsol.alerts.dto.AlertDTO;
 import com.valledelsol.alerts.dto.PushSubscriptionDTO;
 import com.valledelsol.alerts.model.PushSubscription;
@@ -8,16 +9,23 @@ import jakarta.annotation.PostConstruct;
 import nl.martijndwars.webpush.Notification;
 import nl.martijndwars.webpush.PushService;
 import nl.martijndwars.webpush.Subscription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import java.util.Map;
 
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.security.Security;
 import java.util.List;
+
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 @Service
 public class PushNotificationService {
+    private static final Logger log = LoggerFactory.getLogger(PushNotificationService.class);
     private final PushSubscriptionRepository repository;
 
     @Value("${vapid.public.key:}")
@@ -38,12 +46,22 @@ public class PushNotificationService {
     @PostConstruct
     public void init() {
         if (vapidPublicKey == null || vapidPublicKey.isBlank() || vapidPrivateKey == null || vapidPrivateKey.isBlank()) {
+            log.warn("VAPID keys are not configured; PushNotificationService will remain disabled.");
             return;
         }
+
+        if (Security.getProvider("BC") == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
+
         try {
             pushService = new PushService(vapidPublicKey, vapidPrivateKey, vapidSubject);
         } catch (GeneralSecurityException e) {
-            throw new IllegalStateException("Failed to initialize Web Push service", e);
+            log.error("Failed to initialize Web Push service; push notifications will be disabled.", e);
+            pushService = null;
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid VAPID key format; push notifications will be disabled.", e);
+            pushService = null;
         }
     }
 
@@ -77,6 +95,12 @@ public class PushNotificationService {
         saveSubscription(null, dto.getEndpoint(), dto.getP256dh(), dto.getAuth(), dto.getRegion(), dto.getCommune());
     }
 
+    void setPushService(PushService pushService) {
+        this.pushService = pushService;
+    }
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     public void sendPushNotification(AlertDTO alert) {
         if (pushService == null) {
             return;
@@ -87,18 +111,32 @@ public class PushNotificationService {
             return;
         }
 
-        String payload = String.format("%s\n%s", alert.getTitle(), alert.getMessage());
-        for (PushSubscription subscription : subscriptions) {
-            try {
-                Subscription.Keys keys = new Subscription.Keys(subscription.getP256dh(), subscription.getAuth());
-                Subscription webPushSubscription = new Subscription(subscription.getEndpoint(), keys);
-                Notification notification = new Notification(webPushSubscription, payload);
-                // Call send and ignore the concrete HttpResponse type to avoid compile issues
-                // in environments where HttpClient classes are not available on the build path.
-                pushService.send(notification);
-            } catch (Exception e) {
-                e.printStackTrace();
+        try {
+            String payload = OBJECT_MAPPER.writeValueAsString(Map.of(
+                    "title", alert.getTitle(),
+                    "message", alert.getMessage(),
+                    "commune", alert.getCommune(),
+                    "region", alert.getRegion()
+            ));
+
+            for (PushSubscription subscription : subscriptions) {
+                try {
+                    Notification notification = buildNotification(subscription, payload);
+                    // Call send and ignore the concrete HttpResponse type to avoid compile issues
+                    // in environments where HttpClient classes are not available on the build path.
+                    pushService.send(notification);
+                } catch (Exception e) {
+                    log.error("Failed to send push notification to {}", subscription.getEndpoint(), e);
+                }
             }
+        } catch (Exception e) {
+            log.error("Failed to serialize push notification payload", e);
         }
+    }
+
+    protected Notification buildNotification(PushSubscription subscription, String payload) throws Exception {
+        Subscription.Keys keys = new Subscription.Keys(subscription.getP256dh(), subscription.getAuth());
+        Subscription webPushSubscription = new Subscription(subscription.getEndpoint(), keys);
+        return new Notification(webPushSubscription, payload);
     }
 }

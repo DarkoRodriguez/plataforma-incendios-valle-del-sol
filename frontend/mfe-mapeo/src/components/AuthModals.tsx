@@ -34,7 +34,7 @@ export const AuthModals: React.FC<AuthModalsProps> = ({ type, onClose, onAuthSuc
           onAuthSuccess(data.user);
           onClose();
         } else {
-          setError('Invalid username or password');
+          setError('Usuario o contraseña inválidos');
         }
       } else {
         const payload = { username, password, region, commune, email, phone, role };
@@ -48,15 +48,15 @@ export const AuthModals: React.FC<AuthModalsProps> = ({ type, onClose, onAuthSuc
             onAuthSuccess(data.user);
             onClose();
           } else {
-            setError('Registration succeeded, but login failed. Please login manually.');
+            setError('Registro exitoso, pero el ingreso falló. Inicia sesión manualmente.');
           }
         } else {
-          setError('Could not register account. User might already exist.');
+          setError('No se pudo crear la cuenta. El usuario ya existe o los datos son incorrectos.');
         }
       }
     } catch (err) {
       console.error(err);
-      setError(isLogin ? 'Failed to log in' : 'Failed to register account');
+      setError(isLogin ? 'Error al iniciar sesión' : 'Error al registrarse');
     }
   };
 
@@ -152,9 +152,9 @@ export const AuthModals: React.FC<AuthModalsProps> = ({ type, onClose, onAuthSuc
                     outline: 'none'
                   }}
                 >
-                  <option value="USER">Standard User</option>
-                  <option value="BRIGADIST">Brigadist (Fire Control)</option>
-                  <option value="ADMINISTRATOR">Administrator</option>
+                  <option value="USER">Usuario estándar</option>
+                  <option value="BRIGADIST">Brigadista</option>
+                  <option value="ADMINISTRATOR">Administrador</option>
                 </select>
               </div>
             </>

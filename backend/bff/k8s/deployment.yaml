@@ -27,6 +27,10 @@ spec:
               value: "8080"
             - name: SPRING_APPLICATION_NAME
               value: ms-bff
+            - name: JWT_ISSUER
+              value: http://ms-usuarios:8081
+            - name: JWK_SET_URI
+              value: http://ms-usuarios:8081/.well-known/jwks.json
           resources:
             limits:
               memory: "512Mi"

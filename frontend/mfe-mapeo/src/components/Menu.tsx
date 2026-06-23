@@ -16,13 +16,13 @@ export default function Menu() {
   return (
     <nav className="navbar navbar-light bg-light">
       <div className="container-fluid">
-        <span className="navbar-brand">Valle del Sol - Fire Focus Platform</span>
+        <span className="navbar-brand">Valle del Sol - Plataforma de Incendios</span>
         <div>
           {user ? (
             <div className="d-flex align-items-center">
               <span className="me-2">{user.username}</span>
               <Avatar name={user.username} />
-              <button className="btn btn-link ms-3" onClick={logout}>Sign Out</button>
+              <button className="btn btn-link ms-3" onClick={logout}>Cerrar sesión</button>
             </div>
           ) : null}
         </div>

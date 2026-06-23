@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/alerts")
@@ -47,6 +48,18 @@ public class AlertController {
     @PostMapping("/subscriptions")
     public ResponseEntity<?> registerSubscription(@RequestBody PushSubscriptionDTO subscription) {
         pushNotificationService.registerSubscription(subscription);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Desuscribe un endpoint de notificaciones push.
+     */
+    @PostMapping("/unsubscribe")
+    public ResponseEntity<?> unsubscribe(@RequestBody Map<String, String> body) {
+        String endpoint = body.get("endpoint");
+        if (endpoint != null) {
+            pushNotificationService.disableSubscription(endpoint);
+        }
         return ResponseEntity.ok().build();
     }
 

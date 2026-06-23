@@ -15,7 +15,7 @@ spring:
             filters:
               - name: CircuitBreaker
                 args:
-                  name: msUsers
+                  id: msUsers
                   fallbackUri: forward:/api/fallback
           - id: ms-reports
             uri: http://ms-reports:8082
@@ -24,7 +24,7 @@ spring:
             filters:
               - name: CircuitBreaker
                 args:
-                  name: msReports
+                  id: msReports
                   fallbackUri: forward:/api/fallback
           - id: ms-alerts
             uri: http://ms-alerts:8083
@@ -33,7 +33,7 @@ spring:
             filters:
               - name: CircuitBreaker
                 args:
-                  name: msAlerts
+                  id: msAlerts
                   fallbackUri: forward:/api/fallback
   security:
     oauth2:

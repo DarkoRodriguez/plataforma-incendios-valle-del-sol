@@ -1,4 +1,7 @@
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM eclipse-temurin:25-jdk AS build
+
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y maven curl tar gzip ca-certificates \
+	&& rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -8,7 +11,7 @@ RUN mvn dependency:go-offline -q
 COPY src ./src
 RUN mvn clean package -q -DskipTests
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 
 WORKDIR /app
 

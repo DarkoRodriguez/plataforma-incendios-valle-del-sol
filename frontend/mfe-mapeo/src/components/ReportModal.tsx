@@ -61,7 +61,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({ location, onClose, onR
 
         result = await createFireReportMultipart(formData);
       } else {
-        // Submit standard JSON
+        // Enviar JSON estándar
         const payload: FireReportDTO = {
           description,
           type,
@@ -79,11 +79,11 @@ export const ReportModal: React.FC<ReportModalProps> = ({ location, onClose, onR
         onReportSuccess(result);
         onClose();
       } else {
-        setError('Failed to submit fire report. Please try again.');
+        setError('No se pudo enviar el reporte de incendio. Por favor, inténtalo nuevamente.');
       }
     } catch (err) {
       console.error(err);
-      setError('An error occurred while sending report.');
+      setError('Ocurrió un error al enviar el reporte.');
     } finally {
       setIsSubmitting(false);
     }
@@ -119,21 +119,21 @@ export const ReportModal: React.FC<ReportModalProps> = ({ location, onClose, onR
 
           <div className="form-row" style={{ display: 'flex', gap: '10px' }}>
             <div className="form-group" style={{ flex: 1 }}>
-              <label>Fire Type</label>
+              <label>Tipo de incendio</label>
               <select value={type} onChange={e => setType(e.target.value)}>
                 <option value="FORESTAL">Forestal</option>
                 <option value="ESTRUCTURAL">Estructural</option>
                 <option value="VEHICULAR">Vehicular</option>
-                <option value="OTRO">Other</option>
+                <option value="OTRO">Otro</option>
               </select>
             </div>
 
             <div className="form-group" style={{ flex: 1 }}>
-              <label>Status</label>
+              <label>Estado</label>
               <select value={status} onChange={e => setStatus(e.target.value)}>
-                <option value="ACTIVE">Active</option>
-                <option value="CONTROLLED">Controlled</option>
-                <option value="EXTINGUISHED">Extinguished</option>
+                <option value="ACTIVE">ACTIVO</option>
+                <option value="CONTROLLED">CONTROLADO</option>
+                <option value="EXTINGUISHED">EXTINTO</option>
               </select>
             </div>
           </div>

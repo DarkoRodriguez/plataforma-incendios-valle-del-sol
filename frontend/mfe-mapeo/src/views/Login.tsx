@@ -13,7 +13,7 @@ export default function Login() {
     setError(null);
     const data = await login(username, password);
     if (!data) {
-      setError('Invalid credentials');
+      setError('Credenciales inválidas');
       return;
     }
     dispatch({ type: 'login', payload: { user: data.user, token: data.token } });
@@ -21,18 +21,18 @@ export default function Login() {
 
   return (
     <div className="container mt-5" style={{ maxWidth: 420 }}>
-      <h3>Login</h3>
+      <h3>Iniciar sesión</h3>
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
-          <label className="form-label">Username</label>
+          <label className="form-label">Usuario</label>
           <input className="form-control" value={username} onChange={e => setUsername(e.target.value)} />
         </div>
         <div className="mb-3">
-          <label className="form-label">Password</label>
+          <label className="form-label">Contraseña</label>
           <input type="password" className="form-control" value={password} onChange={e => setPassword(e.target.value)} />
         </div>
         {error && <div className="alert alert-danger">{error}</div>}
-        <button className="btn btn-primary" type="submit">Sign In</button>
+        <button className="btn btn-primary" type="submit">Ingresar</button>
       </form>
     </div>
   );

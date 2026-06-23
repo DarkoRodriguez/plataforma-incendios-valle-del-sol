@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ms-mapeo
+  name: ms-reports
   namespace: plataforma-incendios
 spec:
   ports:
     - port: 8082
       targetPort: 8082
   selector:
-    app: ms-mapeo
+    app: ms-reports
   type: ClusterIP

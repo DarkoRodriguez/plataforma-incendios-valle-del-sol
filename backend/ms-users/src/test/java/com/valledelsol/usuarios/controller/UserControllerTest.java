@@ -1,7 +1,6 @@
 package com.valledelsol.usuarios.controller;
 
 import com.valledelsol.usuarios.dto.UserDTO;
-import com.valledelsol.usuarios.auth.JwtUtil;
 import com.valledelsol.usuarios.model.User;
 import com.valledelsol.usuarios.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,22 +10,18 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class UserControllerTest {
 
     @Mock
     private UserService userService;
-
-    @Mock
-    private JwtUtil jwtUtil;
 
     @InjectMocks
     private UserController userController;
@@ -59,16 +54,13 @@ class UserControllerTest {
 
     @Test
     void testGetAllUsersSuccess() {
-        User mockUser = new User("testuser", "pwd");
-        mockUser.setId(2L);
-        mockUser.setRole("USER");
+        UserDTO dto = new UserDTO(2L, "testuser", null, null, null, null, "USER");
 
-        when(jwtUtil.getRole("Bearer valid-token")).thenReturn("ADMINISTRATOR");
-        when(userService.findAll()).thenReturn(Collections.singletonList(mockUser));
+        when(userService.getAllUsersForAdmin("Bearer valid-token")).thenReturn(List.of(dto));
 
         ResponseEntity<?> response = userController.getAllUsers("Bearer valid-token");
+
         assertEquals(200, response.getStatusCode().value());
-        
         List<?> body = (List<?>) response.getBody();
         assertNotNull(body);
         assertEquals(1, body.size());
@@ -76,13 +68,17 @@ class UserControllerTest {
 
     @Test
     void testGetAllUsersUnauthorized() {
+        when(userService.getAllUsersForAdmin(null))
+                .thenThrow(new IllegalArgumentException("Falta cabecera de Autorización"));
+
         ResponseEntity<?> response = userController.getAllUsers(null);
         assertEquals(401, response.getStatusCode().value());
     }
 
     @Test
     void testGetAllUsersForbidden() {
-        when(jwtUtil.getRole("Bearer normal-token")).thenReturn("USER");
+        when(userService.getAllUsersForAdmin("Bearer normal-token"))
+                .thenThrow(new SecurityException("Acceso denegado: se requieren permisos de Administrador"));
 
         ResponseEntity<?> response = userController.getAllUsers("Bearer normal-token");
         assertEquals(403, response.getStatusCode().value());
@@ -90,14 +86,19 @@ class UserControllerTest {
 
     @Test
     void testUpdateUserSuccess() {
-        User mockUser = new User("username", "pwd");
-        mockUser.setId(5L);
-        mockUser.setRole("USER");
+        UserDTO updatedDto = new UserDTO(5L, "new-name", null, null, "new@mail.com", null, "USER");
 
-        when(jwtUtil.getUserId("Bearer user-token")).thenReturn(5L);
-        when(jwtUtil.getRole("Bearer user-token")).thenReturn("USER");
-        when(userService.findById(5L)).thenReturn(Optional.of(mockUser));
-        when(userService.save(any(User.class))).thenReturn(mockUser);
+        when(userService.updateUser(
+                eq(5L),
+                eq("Bearer user-token"),
+                eq("new-name"),
+                isNull(),
+                isNull(),
+                isNull(),
+                eq("new@mail.com"),
+                isNull(),
+                isNull()
+        )).thenReturn(updatedDto);
 
         UserController.UpdateRequest req = new UserController.UpdateRequest();
         req.username = "new-name";
@@ -113,13 +114,9 @@ class UserControllerTest {
 
     @Test
     void testUpdateUserRoleSuccess() {
-        User mockUser = new User("someuser", "pwd");
-        mockUser.setId(10L);
-        mockUser.setRole("USER");
+        UserDTO updatedDto = new UserDTO(10L, "someuser", null, null, null, null, "BRIGADIST");
 
-        when(jwtUtil.getRole("Bearer admin-token")).thenReturn("ADMINISTRATOR");
-        when(userService.findById(10L)).thenReturn(Optional.of(mockUser));
-        when(userService.save(any(User.class))).thenReturn(mockUser);
+        when(userService.updateUserRole(10L, "BRIGADIST", "Bearer admin-token")).thenReturn(updatedDto);
 
         UserController.RoleUpdateRequest req = new UserController.RoleUpdateRequest();
         req.role = "BRIGADIST";

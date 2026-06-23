@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ms-mapeo
+  name: ms-reports
   namespace: plataforma-incendios
   labels:
-    app: ms-mapeo
+    app: ms-reports
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ms-mapeo
+      app: ms-reports
   template:
     metadata:
       labels:
-        app: ms-mapeo
+        app: ms-reports
     spec:
       containers:
-        - name: ms-mapeo
-          image: plataforma/ms-mapeo:latest
+        - name: ms-reports
+          image: plataforma/ms-reports:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8082
@@ -31,6 +31,18 @@ spec:
               value: postgres
             - name: SERVER_PORT
               value: "8082"
+            - name: JWK_SET_URI
+              value: http://ms-usuarios:8081/.well-known/jwks.json
+            - name: MINIO_ENDPOINT
+              value: http://minio-storage:9000
+            - name: MINIO_EXTERNAL_URL
+              value: http://localhost:30090
+            - name: MINIO_ACCESS_KEY
+              value: minio_userlog
+            - name: MINIO_SECRET_KEY
+              value: minio_passlog
+            - name: MINIO_BUCKET
+              value: multimedia-reportes
           resources:
             limits:
               memory: "512Mi"

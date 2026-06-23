@@ -92,10 +92,25 @@ server:
 security.jwt.jwks-url: ${JWK_SET_URI:http://ms-usuarios:8081/.well-known/jwks.json}
 ```
 
+## Swagger / OpenAPI
+
+- Swagger UI: `http://localhost:8083/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8083/api/alerts/v3/api-docs`
+
 ## Pruebas
 
 ```bash
 ./mvnw test
 ```
 
-Pruebas principales: `AlertServiceTest`, `AlertControllerTest`.
+Pruebas principales:
+- `AlertServiceTest`: valida la lógica de creación y manejo de alertas.
+- `AlertControllerTest`: verifica los endpoints de alertas y SSE.
+- `PushNotificationServiceTest`: comprueba el envío de notificaciones y el control de suscripciones.
+
+Cobertura general:
+- INSTRUCTION: 67.2%
+- BRANCH: 59.4%
+- LINE: 72.9%
+
+Fuente de análisis: `target/site/jacoco/jacoco.xml`

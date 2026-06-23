@@ -23,7 +23,7 @@ export default function Profile() {
     const updated = await updateUser(user.id, { username }, token);
     if (updated) {
       dispatch({ type: 'update_user', payload: { username: updated.username } });
-      alert('Profile updated successfully!');
+      alert('Perfil actualizado correctamente');
     }
   }
 
@@ -31,14 +31,14 @@ export default function Profile() {
 
   return (
     <div className="container mt-4" style={{ maxWidth: 720 }}>
-      <h3>Profile</h3>
-      {loading ? <div>Loading...</div> : (
+      <h3>Perfil</h3>
+      {loading ? <div>Cargando...</div> : (
         <div>
           <div className="mb-3">
-            <label className="form-label">Username</label>
+            <label className="form-label">Usuario</label>
             <input className="form-control" value={username} onChange={e => setUsername(e.target.value)} />
           </div>
-          <button className="btn btn-success" onClick={save}>Save</button>
+          <button className="btn btn-success" onClick={save}>Guardar</button>
         </div>
       )}
     </div>

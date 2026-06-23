@@ -55,6 +55,18 @@ La BFF puede agregar los OpenAPI de los servicios bajo un solo Swagger UI.
   - `http://ms-mapeo:8082/api/reports/v3/api-docs`
   - `http://ms-alerts:8083/api/alerts/v3/api-docs`
 
+## Servicios individuales compatibles
+
+- `ms-users`
+  - Swagger UI: `http://localhost:8081/swagger-ui/index.html`
+  - OpenAPI JSON: `http://localhost:8081/api/users/v3/api-docs`
+- `ms-reports`
+  - Swagger UI: `http://localhost:8082/swagger-ui/index.html`
+  - OpenAPI JSON: `http://localhost:8082/api/reports/v3/api-docs`
+- `ms-alerts`
+  - Swagger UI: `http://localhost:8083/swagger-ui/index.html`
+  - OpenAPI JSON: `http://localhost:8083/api/alerts/v3/api-docs`
+
 ## Configuración
 
 ```yaml
@@ -71,4 +83,12 @@ JWK_SET_URI: http://ms-usuarios:8081/.well-known/jwks.json
 ./mvnw test
 ```
 
-Pruebas principales: `ValidateControllerTest`.
+Pruebas principales:
+- `ValidateControllerTest`: valida el endpoint de verificación JWT.
+
+Cobertura general:
+- INSTRUCTION: 94.5%
+- BRANCH: 75.0%
+- LINE: 91.4%
+
+Fuente de análisis: `target/site/jacoco/jacoco.xml`

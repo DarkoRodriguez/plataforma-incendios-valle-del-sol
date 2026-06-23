@@ -4,9 +4,10 @@ metadata:
   name: mfe-mapeo
   namespace: plataforma-incendios
 spec:
+  type: NodePort
   ports:
     - port: 80
       targetPort: 80
+      nodePort: 30080
   selector:
     app: mfe-mapeo
-  type: ClusterIP
