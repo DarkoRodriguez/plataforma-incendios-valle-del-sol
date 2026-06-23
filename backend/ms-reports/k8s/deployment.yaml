@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-reports
+  namespace: plataforma-incendios
+  labels:
+    app: ms-reports
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-reports
+  template:
+    metadata:
+      labels:
+        app: ms-reports
+    spec:
+      containers:
+        - name: ms-reports
+          image: plataforma/ms-reports:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8082
+              name: http
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/ms_mapeo
+            - name: SPRING_DATASOURCE_USERNAME
+              value: postgres
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: postgres
+            - name: SERVER_PORT
+              value: "8082"
+            - name: JWK_SET_URI
+              value: http://ms-usuarios:8081/.well-known/jwks.json
+            - name: MINIO_ENDPOINT
+              value: http://minio-storage:9000
+            - name: MINIO_EXTERNAL_URL
+              value: http://localhost:30090
+            - name: MINIO_ACCESS_KEY
+              value: minio_userlog
+            - name: MINIO_SECRET_KEY
+              value: minio_passlog
+            - name: MINIO_BUCKET
+              value: multimedia-reportes
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "100m"

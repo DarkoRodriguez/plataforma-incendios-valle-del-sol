@@ -2,6 +2,14 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
+# Accept VAPID_PUBLIC_KEY as build argument
+ARG VITE_VAPID_PUBLIC_KEY
+ARG VITE_API_BASE=/api
+
+# Set environment variables for build
+ENV VITE_VAPID_PUBLIC_KEY=${VITE_VAPID_PUBLIC_KEY}
+ENV VITE_API_BASE=${VITE_API_BASE}
+
 # Copy package.json and package-lock.json first to leverage Docker cache
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
@@ -9,7 +17,7 @@ RUN npm install --legacy-peer-deps
 # Copy the rest of the application
 COPY . .
 
-# Build the application
+# Build the application with environment variables
 RUN npm run build
 
 # Production environment

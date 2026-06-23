@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ms-alerts
+  namespace: plataforma-incendios
+spec:
+  ports:
+    - port: 8083
+      targetPort: 8083
+  selector:
+    app: ms-alerts
+  type: ClusterIP

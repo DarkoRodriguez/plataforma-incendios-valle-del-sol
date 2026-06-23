@@ -1,0 +1,43 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: ms-mapeo
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/ms_mapeo}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.spatial.dialect.postgis.PostgisPG10Dialect
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+    show-sql: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+
+springdoc:
+  api-docs:
+    path: /api/reports/v3/api-docs
+
+security:
+  jwt:
+    jwks-url: ${JWK_SET_URI:http://ms-users:8081/.well-known/jwks.json}
+
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  accessKey: ${MINIO_ACCESS_KEY:minio_userlog}
+  secretKey: ${MINIO_SECRET_KEY:minio_passlog}
+  bucketName: ${MINIO_BUCKET:multimedia-reportes}
+  externalUrl: ${MINIO_EXTERNAL_URL:http://localhost:9000}
