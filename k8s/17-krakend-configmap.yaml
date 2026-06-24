@@ -38,8 +38,9 @@ data:
         {
           "endpoint": "/api/users/auth/register",
           "method": "POST",
+          "output_encoding": "no-op",
           "input_headers": ["Content-Type"],
-          "backend": [{ "url_pattern": "/api/users/auth/register", "host": ["http://ms-bff:8080"] }]
+          "backend": [{ "url_pattern": "/api/users/auth/register", "encoding": "no-op", "host": ["http://ms-bff:8080"] }]
         },
         {
           "endpoint": "/api/users",
@@ -96,6 +97,7 @@ data:
           "endpoint": "/api/reports/statistics/count",
           "method": "GET",
           "output_encoding": "no-op",
+          "input_query_strings": ["type"],
           "backend": [{ "url_pattern": "/api/reports/statistics/count", "encoding": "no-op", "host": ["http://ms-bff:8080"] }]
         },
         {
@@ -121,14 +123,16 @@ data:
         {
           "endpoint": "/api/alerts/subscriptions",
           "method": "POST",
+          "output_encoding": "no-op",
           "input_headers": ["Content-Type"],
-          "backend": [{ "url_pattern": "/api/alerts/subscriptions", "host": ["http://ms-bff:8080"] }]
+          "backend": [{ "url_pattern": "/api/alerts/subscriptions", "encoding": "no-op", "host": ["http://ms-bff:8080"] }]
         },
         {
           "endpoint": "/api/alerts/unsubscribe",
           "method": "POST",
+          "output_encoding": "no-op",
           "input_headers": ["Content-Type"],
-          "backend": [{ "url_pattern": "/api/alerts/unsubscribe", "host": ["http://ms-bff:8080"] }]
+          "backend": [{ "url_pattern": "/api/alerts/unsubscribe", "encoding": "no-op", "host": ["http://ms-bff:8080"] }]
         },
         {
           "endpoint": "/api/health",

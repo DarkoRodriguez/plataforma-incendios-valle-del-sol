@@ -15,6 +15,7 @@ spec:
       labels:
         app: krakend
     spec:
+      enableServiceLinks: false
       initContainers:
         - name: wait-for-bff
           image: busybox:1.36

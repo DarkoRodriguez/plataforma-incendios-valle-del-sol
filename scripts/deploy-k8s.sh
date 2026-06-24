@@ -58,8 +58,6 @@ for cmd in docker kubectl; do
   command -v "$cmd" >/dev/null 2>&1 || error "Required command not found: $cmd"
 done
 
-kubectl cluster-info >/dev/null 2>&1 || error "kubectl cannot reach a Kubernetes cluster."
-
 if [[ ! -f .env ]]; then
   error ".env not found. Copy .env.example to .env and fill in VAPID key values."
 fi
@@ -83,6 +81,8 @@ VAPID_SUBJECT="$(get_env_value VAPID_SUBJECT)"
 if [[ "${1:-}" == "--setup-kind" ]]; then
   bash "$ROOT_DIR/scripts/setup-kind.sh"
 fi
+
+kubectl cluster-info >/dev/null 2>&1 || error "kubectl cannot reach a Kubernetes cluster."
 
 if ! kubectl get ingressclass traefik >/dev/null 2>&1; then
   echo "Traefik not found. Installing..."

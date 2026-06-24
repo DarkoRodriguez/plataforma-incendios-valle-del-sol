@@ -183,39 +183,174 @@ Usa siempre el `docker-compose.yml` de la raíz del proyecto. Los archivos `dock
 - `backend/ms-users/NOTA-DOCKER-CENTRALIZADO.md` - Indicaciones de uso del `docker-compose.yml` central.
 - `docs/extras/Informe Parcial 2 - (ex readme).md` - Contexto de negocio y arquitectura extendida.
 
-## 5.1 Despliegue Kubernetes local (kind / Docker Desktop)
+## 5.1 Despliegue con Kubernetes (kind / Docker Desktop)
 
-El stack se despliega en el namespace `plataforma-incendios` con manifiestos planos numerados en `k8s/`. El flujo de tráfico es:
+El stack se despliega en el namespace `plataforma-incendios` con manifiestos planos numerados en `k8s/`.
 
-**Frontend → Traefik → Krakend → BFF → microservicios**
+**Flujo de tráfico:**
 
-### Requisitos
+```
+Navegador → Traefik (Ingress) → Frontend (mfe-mapeo)
+                              → Krakend (API Gateway) → BFF → microservicios
+```
 
-- Docker
-- kubectl
-- Helm 3 (para instalar Traefik)
-- kind (solo Linux/macOS si usas kind)
-- `.env` con claves VAPID
-- `private_key.pem` y `public_key.pem` en la raíz del repositorio
+Los scripts de despliegue automatizan: instalación de Traefik, construcción de imágenes Docker, creación de secrets, aplicación de manifiestos y espera de los rollouts.
 
-### Linux (kind)
+---
+
+### Requisitos previos
+
+| Herramienta | Linux (kind) | Windows (Docker Desktop) |
+|-------------|:------------:|:------------------------:|
+| Docker | ✅ | ✅ |
+| kubectl | ✅ | ✅ (incluido en Docker Desktop) |
+| Helm 3 | ✅ | ✅ |
+| kind | ✅ | No necesario |
+| Kubernetes activo | Cluster kind | Settings → Kubernetes → Enable |
+
+**Archivos obligatorios en la raíz del repositorio:**
+
+- `.env` con claves VAPID (copiar desde `.env.example`)
+- `private_key.pem` y `public_key.pem` (JWT RS256 para ms-users)
+
+> Las claves RSA ya vienen en el repositorio para uso local. Si las rotas, regenera con OpenSSL (ver sección 5).
+
+**Recursos recomendados:** asigna al menos **6–8 GB de RAM** a Docker. El cluster levanta Postgres, MinIO, 4 microservicios Java, Krakend, frontend y Traefik.
+
+---
+
+### Paso 1 — Clonar y preparar el entorno
 
 ```bash
-cp .env.example .env   # completar VAPID keys
+git clone <url-del-repositorio>
+cd plataforma-incendios-valle-del-sol
+cp .env.example .env
+```
+
+En **Windows (PowerShell)**:
+
+```powershell
+git clone <url-del-repositorio>
+cd plataforma-incendios-valle-del-sol
+Copy-Item .env.example .env
+```
+
+---
+
+### Paso 2 — Configurar variables y claves
+
+Edita `.env` y completa las claves VAPID (necesarias para notificaciones push en `ms-alerts` y el build del frontend):
+
+```env
+VAPID_PUBLIC_KEY=<tu-clave-publica-base64-url-safe>
+VAPID_PRIVATE_KEY=<tu-clave-privada-base64-url-safe>
+VITE_VAPID_PUBLIC_KEY=<misma clave pública>
+VAPID_SUBJECT=mailto:tu-email@example.com
+```
+
+Para generar claves VAPID puedes usar el script incluido:
+
+```bash
+python3 generate_vapid_keys.py
+```
+
+Verifica que existan las claves JWT en la raíz:
+
+```bash
+ls private_key.pem public_key.pem
+```
+
+---
+
+### Paso 3 — Desplegar
+
+#### Linux / macOS (kind)
+
+Instala [kind](https://kind.sigs.k8s.io/) si no lo tienes. El primer despliegue crea el cluster y aplica todo en un solo comando:
+
+```bash
+chmod +x scripts/*.sh
 ./scripts/deploy-k8s.sh --setup-kind
 ```
 
-El flag `--setup-kind` crea el cluster `plataforma` con `kind-config.yaml` (puertos 80/443 mapeados al host).
+El flag `--setup-kind`:
 
-### Windows (Docker Desktop)
+1. Crea el cluster `plataforma` con `kind-config.yaml`
+2. Mapea los puertos **80**, **443**, **30090** y **30091** al host
+3. Construye las imágenes `plataforma/*:latest`
+4. Carga las imágenes en kind
+5. Instala Traefik (si no existe)
+6. Aplica todos los manifiestos de `k8s/`
 
-1. Activa Kubernetes en Docker Desktop.
-2. Copia `.env.example` a `.env` y completa las claves VAPID.
-3. Ejecuta:
+**Redespliegues posteriores** (sin recrear el cluster):
+
+```bash
+./scripts/deploy-k8s.sh
+```
+
+Solo reconstruye imágenes, actualiza secrets y reaplica manifiestos. **Los datos en Postgres y MinIO se conservan** (volúmenes persistentes).
+
+#### Windows (Docker Desktop)
+
+1. Abre **Docker Desktop → Settings → Kubernetes → Enable Kubernetes** y espera a que el cluster esté listo.
+2. Instala [Helm 3](https://helm.sh/docs/intro/install/) si no lo tienes.
+3. En PowerShell, desde la raíz del proyecto:
 
 ```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned   # solo la primera vez, si PowerShell bloquea scripts
 .\scripts\deploy-k8s.ps1
 ```
+
+En Docker Desktop **no hace falta kind**: las imágenes que construye `docker build` las usa el cluster directamente.
+
+---
+
+### Paso 4 — Configurar el archivo hosts (recomendado)
+
+Agrega esta línea para acceder también por nombre de dominio local:
+
+**Linux / macOS** — editar `/etc/hosts`:
+
+```
+127.0.0.1 plataforma.local
+```
+
+**Windows** — editar `C:\Windows\System32\drivers\etc\hosts` (como administrador):
+
+```
+127.0.0.1 plataforma.local
+```
+
+---
+
+### Paso 5 — Verificar el despliegue
+
+Comprueba que todos los pods estén en estado `Running`:
+
+```bash
+kubectl config current-context
+kubectl get pods -n plataforma-incendios
+```
+
+Salida esperada: `postgres`, `minio`, `ms-users`, `ms-reports`, `ms-alerts`, `ms-bff`, `krakend` y `mfe-mapeo` en **Running**. El job `minio-setup` debe aparecer como **Completed**.
+
+Prueba rápida desde terminal:
+
+```bash
+curl -s -o /dev/null -w "Frontend: HTTP %{http_code}\n" http://localhost/
+curl -s -w "Contadores: HTTP %{http_code} → " "http://localhost/api/reports/statistics/count?type=FORESTAL"
+echo
+```
+
+Abre en el navegador **http://localhost** o **http://plataforma.local** y valida:
+
+1. Registro e inicio de sesión
+2. Creación de reportes en el mapa
+3. Panel de administrador (contadores por tipo de incendio)
+4. Activación de notificaciones push
+5. Publicación de alertas (usuario brigadista o administrador)
+
+---
 
 ### URLs de acceso
 
@@ -226,26 +361,60 @@ El flag `--setup-kind` crea el cluster `plataforma` con `kind-config.yaml` (puer
 | MinIO API | `http://localhost:30090` |
 | MinIO Console | `http://localhost:30091` |
 
-Agrega a tu archivo hosts:
+---
 
+### Comandos útiles
+
+```bash
+# Ver logs de un servicio
+kubectl logs -n plataforma-incendios -l app=ms-users --tail=50
+kubectl logs -n plataforma-incendios -l app=krakend --tail=50
+
+# Reiniciar un deployment tras cambiar su manifiesto
+kubectl rollout restart deployment/krakend -n plataforma-incendios
+
+# Reconstruir imágenes y redesplegar (Linux)
+./scripts/deploy-k8s.sh
+
+# Destruir el cluster kind y empezar de cero (Linux)
+kind delete cluster --name plataforma
+./scripts/deploy-k8s.sh --setup-kind
+
+# Borrar namespace y todos los recursos (conserva el cluster)
+kubectl delete namespace plataforma-incendios
+./scripts/deploy-k8s.sh
 ```
-127.0.0.1 plataforma.local
-```
+
+En **Windows**, para un reinicio limpio desactiva y reactiva Kubernetes en Docker Desktop, o elimina el namespace con `kubectl delete namespace plataforma-incendios` y vuelve a ejecutar `.\scripts\deploy-k8s.ps1`.
+
+---
 
 ### Estructura de manifiestos
 
 ```
 k8s/
   00-namespace.yaml
-  01-04  postgres
-  05-08  minio (+ job de inicialización)
+  01-04  postgres (ConfigMap, PVC, Deployment, Service)
+  05-08  minio (PVC, Deployment, Service, Job de inicialización)
   09-16  microservicios y BFF
-  17-19  krakend
-  20-21  frontend
+  17-19  krakend (ConfigMap, Deployment, Service)
+  20-21  frontend (Deployment, Service)
   22     ingress (Traefik)
 ```
 
-Los scripts instalan Traefik automáticamente si no existe, construyen las imágenes `plataforma/*:latest` y cargan imágenes en kind cuando corresponde.
+---
+
+### Solución de problemas frecuentes
+
+| Síntoma | Causa probable | Qué hacer |
+|---------|----------------|-----------|
+| `kubectl cannot reach a Kubernetes cluster` | Cluster no creado o Docker apagado | Linux: `./scripts/deploy-k8s.sh --setup-kind`. Windows: activar Kubernetes en Docker Desktop |
+| Pod en `ImagePullBackOff` | Imagen no disponible en el nodo | Linux kind: `./scripts/deploy-k8s.sh` (recarga imágenes). Windows: reconstruir con el script PS1 |
+| Registro devuelve 500 | Krakend no reenvía bien respuestas vacías o 201 | Verifica que `k8s/17-krakend-configmap.yaml` esté actualizado y reinicia Krakend |
+| Contadores del admin en 0 | Query param `type` no llega al backend | Mismo ConfigMap de Krakend; endpoint con `input_query_strings: ["type"]` |
+| Push subscriptions devuelve 500 | Respuesta 200 vacía mal manejada por Krakend | Endpoints `/api/alerts/subscriptions` y `/unsubscribe` con `output_encoding: no-op` |
+| Puerto 80 ocupado | Otro servicio usa el puerto | Detén nginx/Apache local o cambia `hostPort` en `kind-config.yaml` |
+| Lentitud al arrancar | Varios pods Java en un solo nodo | Normal en entorno local; espera 2–5 min en el primer despliegue |
 
 ---
 
