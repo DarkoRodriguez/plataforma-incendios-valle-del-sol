@@ -3,10 +3,13 @@ kind: Service
 metadata:
   name: postgres
   namespace: plataforma-incendios
+  labels:
+    app: postgres
 spec:
+  type: ClusterIP
   ports:
     - port: 5432
       targetPort: 5432
+      name: postgres
   selector:
     app: postgres
-  type: ClusterIP

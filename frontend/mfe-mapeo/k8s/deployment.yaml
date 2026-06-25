@@ -22,10 +22,22 @@ spec:
           ports:
             - containerPort: 80
               name: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 15
           resources:
-            limits:
-              memory: "256Mi"
-              cpu: "300m"
             requests:
-              memory: "128Mi"
-              cpu: "50m"
+              memory: 64Mi
+              cpu: 50m
+            limits:
+              memory: 256Mi
+              cpu: 300m

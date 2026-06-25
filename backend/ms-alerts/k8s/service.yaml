@@ -3,10 +3,13 @@ kind: Service
 metadata:
   name: ms-alerts
   namespace: plataforma-incendios
+  labels:
+    app: ms-alerts
 spec:
+  type: ClusterIP
   ports:
     - port: 8083
       targetPort: 8083
+      name: http
   selector:
     app: ms-alerts
-  type: ClusterIP
