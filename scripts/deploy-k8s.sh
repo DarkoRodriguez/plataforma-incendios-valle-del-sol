@@ -22,20 +22,20 @@ MANIFESTS=(
   k8s/05-minio-pvc.yaml
   k8s/06-minio-deployment.yaml
   k8s/07-minio-service.yaml
-  k8s/09-ms-users-deployment.yaml
-  k8s/10-ms-users-service.yaml
-  k8s/11-ms-reports-deployment.yaml
-  k8s/12-ms-reports-service.yaml
-  k8s/13-ms-alerts-deployment.yaml
-  k8s/14-ms-alerts-service.yaml
-  k8s/15-ms-bff-deployment.yaml
-  k8s/16-ms-bff-service.yaml
-  k8s/17-krakend-configmap.yaml
-  k8s/18-krakend-deployment.yaml
-  k8s/19-krakend-service.yaml
-  k8s/20-mfe-mapeo-deployment.yaml
-  k8s/21-mfe-mapeo-service.yaml
-  k8s/22-ingress.yaml
+  backend/ms-users/k8s/deployment.yaml
+  backend/ms-users/k8s/service.yaml
+  backend/ms-reports/k8s/deployment.yaml
+  backend/ms-reports/k8s/service.yaml
+  backend/ms-alerts/k8s/deployment.yaml
+  backend/ms-alerts/k8s/service.yaml
+  backend/bff/k8s/deployment.yaml
+  backend/bff/k8s/service.yaml
+  krakend/k8s/configmap.yaml
+  krakend/k8s/deployment.yaml
+  krakend/k8s/service.yaml
+  frontend/mfe-mapeo/k8s/deployment.yaml
+  frontend/mfe-mapeo/k8s/service.yaml
+  k8s/09-ingress.yaml
 )
 
 DEPLOYMENTS=(

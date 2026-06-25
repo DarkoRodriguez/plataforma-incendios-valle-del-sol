@@ -94,17 +94,17 @@ La plataforma se describe mediante tres diagramas principales:
 ```
 plataforma-incendios-valle-del-sol/
 ├── backend/
-│   ├── bff/           # API Gateway / Backend For Frontend
+│   ├── bff/           # API Gateway / Backend For Frontend (+ k8s/)
 │   ├── demo/          # Servicio de demostración / plantilla adicional
-│   ├── ms-alerts/     # Microservicio de alertas en tiempo real
-│   ├── ms-reports/    # Microservicio de reportes y geodatos
-│   └── ms-users/      # Microservicio de autenticación y usuarios
+│   ├── ms-alerts/     # Microservicio de alertas en tiempo real (+ k8s/)
+│   ├── ms-reports/    # Microservicio de reportes y geodatos (+ k8s/)
+│   └── ms-users/      # Microservicio de autenticación y usuarios (+ k8s/)
 ├── docs/              # Documentación y entregables
 ├── frontend/
-│   └── mfe-mapeo/     # Microfrontend React + Vite
+│   └── mfe-mapeo/     # Microfrontend React + Vite (+ k8s/)
 ├── init-scripts/      # Scripts SQL para inicializar PostgreSQL
-├── k8s/               # Manifiestos Kubernetes (despliegue local)
-├── krakend/           # Configuración del API gateway Krakend
+├── k8s/               # Infra compartida K8s (namespace, postgres, minio, ingress)
+├── krakend/           # Configuración del API gateway Krakend (+ k8s/)
 ├── scripts/           # Scripts de despliegue (Docker Compose y Kubernetes)
 ├── docker-compose.yml # Orquestación del stack completo
 ├── private_key.pem    # Clave privada JWT (montada en ms-users)
@@ -185,7 +185,7 @@ Usa siempre el `docker-compose.yml` de la raíz del proyecto. Los archivos `dock
 
 ## 5.1 Despliegue con Kubernetes (kind / Docker Desktop)
 
-El stack se despliega en el namespace `plataforma-incendios` con manifiestos planos numerados en `k8s/`.
+El stack se despliega en el namespace `plataforma-incendios`. Cada componente (microservicios, BFF, frontend y Krakend) incluye sus manifiestos en su carpeta `k8s/`; la infraestructura compartida (namespace, Postgres, MinIO e Ingress) vive en `k8s/` en la raíz.
 
 **Flujo de tráfico:**
 
@@ -280,7 +280,7 @@ El flag `--setup-kind`:
 3. Construye las imágenes `plataforma/*:latest`
 4. Carga las imágenes en kind
 5. Instala Traefik (si no existe)
-6. Aplica todos los manifiestos de `k8s/`
+6. Aplica todos los manifiestos (infra compartida + `k8s/` de cada componente)
 
 **Redespliegues posteriores** (sin recrear el cluster):
 
@@ -392,14 +392,18 @@ En **Windows**, para un reinicio limpio desactiva y reactiva Kubernetes en Docke
 ### Estructura de manifiestos
 
 ```
-k8s/
+k8s/                              # Infraestructura compartida
   00-namespace.yaml
   01-04  postgres (ConfigMap, PVC, Deployment, Service)
   05-08  minio (PVC, Deployment, Service, Job de inicialización)
-  09-16  microservicios y BFF
-  17-19  krakend (ConfigMap, Deployment, Service)
-  20-21  frontend (Deployment, Service)
-  22     ingress (Traefik)
+  09     ingress (Traefik)
+
+backend/ms-users/k8s/             # deployment.yaml, service.yaml
+backend/ms-reports/k8s/           # deployment.yaml, service.yaml
+backend/ms-alerts/k8s/            # deployment.yaml, service.yaml
+backend/bff/k8s/                  # deployment.yaml, service.yaml
+krakend/k8s/                      # configmap.yaml, deployment.yaml, service.yaml
+frontend/mfe-mapeo/k8s/           # deployment.yaml, service.yaml
 ```
 
 ---
@@ -410,7 +414,7 @@ k8s/
 |---------|----------------|-----------|
 | `kubectl cannot reach a Kubernetes cluster` | Cluster no creado o Docker apagado | Linux: `./scripts/deploy-k8s.sh --setup-kind`. Windows: activar Kubernetes en Docker Desktop |
 | Pod en `ImagePullBackOff` | Imagen no disponible en el nodo | Linux kind: `./scripts/deploy-k8s.sh` (recarga imágenes). Windows: reconstruir con el script PS1 |
-| Registro devuelve 500 | Krakend no reenvía bien respuestas vacías o 201 | Verifica que `k8s/17-krakend-configmap.yaml` esté actualizado y reinicia Krakend |
+| Registro devuelve 500 | Krakend no reenvía bien respuestas vacías o 201 | Verifica que `krakend/k8s/configmap.yaml` esté actualizado y reinicia Krakend |
 | Contadores del admin en 0 | Query param `type` no llega al backend | Mismo ConfigMap de Krakend; endpoint con `input_query_strings: ["type"]` |
 | Push subscriptions devuelve 500 | Respuesta 200 vacía mal manejada por Krakend | Endpoints `/api/alerts/subscriptions` y `/unsubscribe` con `output_encoding: no-op` |
 | Puerto 80 ocupado | Otro servicio usa el puerto | Detén nginx/Apache local o cambia `hostPort` en `kind-config.yaml` |
