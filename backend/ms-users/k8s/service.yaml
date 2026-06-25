@@ -1,12 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ms-usuarios
+  name: ms-users
   namespace: plataforma-incendios
+  labels:
+    app: ms-users
 spec:
+  type: ClusterIP
   ports:
     - port: 8081
       targetPort: 8081
+      name: http
   selector:
-    app: ms-usuarios
-  type: ClusterIP
+    app: ms-users

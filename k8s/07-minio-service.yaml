@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: minio-storage
   namespace: plataforma-incendios
+  labels:
+    app: minio
 spec:
   type: NodePort
   ports:

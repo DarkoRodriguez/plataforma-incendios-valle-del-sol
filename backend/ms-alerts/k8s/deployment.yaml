@@ -15,6 +15,17 @@ spec:
       labels:
         app: ms-alerts
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z postgres 5432; do
+                echo "Waiting for postgres..."
+                sleep 2
+              done
       containers:
         - name: ms-alerts
           image: plataforma/ms-alerts:latest
@@ -32,14 +43,24 @@ spec:
             - name: SERVER_PORT
               value: "8083"
             - name: JWK_SET_URI
-              value: http://ms-usuarios:8081/.well-known/jwks.json
+              value: http://ms-users:8081/.well-known/jwks.json
           envFrom:
             - secretRef:
                 name: ms-alerts-keys
+          readinessProbe:
+            tcpSocket:
+              port: 8083
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8083
+            initialDelaySeconds: 60
+            periodSeconds: 15
           resources:
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
             requests:
-              memory: "256Mi"
-              cpu: "100m"
+              memory: 256Mi
+              cpu: 100m
+            limits:
+              memory: 512Mi
+              cpu: 500m

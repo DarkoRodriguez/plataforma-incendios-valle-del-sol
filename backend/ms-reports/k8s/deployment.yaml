@@ -15,6 +15,27 @@ spec:
       labels:
         app: ms-reports
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z postgres 5432; do
+                echo "Waiting for postgres..."
+                sleep 2
+              done
+        - name: wait-for-minio
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z minio-storage 9000; do
+                echo "Waiting for minio..."
+                sleep 2
+              done
       containers:
         - name: ms-reports
           image: plataforma/ms-reports:latest
@@ -32,7 +53,7 @@ spec:
             - name: SERVER_PORT
               value: "8082"
             - name: JWK_SET_URI
-              value: http://ms-usuarios:8081/.well-known/jwks.json
+              value: http://ms-users:8081/.well-known/jwks.json
             - name: MINIO_ENDPOINT
               value: http://minio-storage:9000
             - name: MINIO_EXTERNAL_URL
@@ -43,10 +64,20 @@ spec:
               value: minio_passlog
             - name: MINIO_BUCKET
               value: multimedia-reportes
+          readinessProbe:
+            tcpSocket:
+              port: 8082
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8082
+            initialDelaySeconds: 60
+            periodSeconds: 15
           resources:
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
             requests:
-              memory: "256Mi"
-              cpu: "100m"
+              memory: 256Mi
+              cpu: 100m
+            limits:
+              memory: 512Mi
+              cpu: 500m
