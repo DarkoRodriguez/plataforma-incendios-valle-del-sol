@@ -2,3 +2,5 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: plataforma-incendios
+  labels:
+    app.kubernetes.io/part-of: plataforma-incendios

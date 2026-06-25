@@ -3,10 +3,13 @@ kind: Service
 metadata:
   name: ms-reports
   namespace: plataforma-incendios
+  labels:
+    app: ms-reports
 spec:
+  type: ClusterIP
   ports:
     - port: 8082
       targetPort: 8082
+      name: http
   selector:
     app: ms-reports
-  type: ClusterIP

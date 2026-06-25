@@ -26,8 +26,9 @@ FROM nginx:alpine
 # Copy built assets from builder
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy custom Nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# nginx.conf for Docker Compose (API proxy); nginx.k8s.conf for Kubernetes (static only)
+ARG NGINX_CONF=nginx.conf
+COPY ${NGINX_CONF} /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 

@@ -3,11 +3,13 @@ kind: Service
 metadata:
   name: ms-bff
   namespace: plataforma-incendios
+  labels:
+    app: ms-bff
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
     - port: 8080
       targetPort: 8080
-      nodePort: 30081
+      name: http
   selector:
     app: ms-bff

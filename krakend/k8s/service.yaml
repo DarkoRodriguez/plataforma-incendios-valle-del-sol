@@ -3,10 +3,13 @@ kind: Service
 metadata:
   name: krakend
   namespace: plataforma-incendios
+  labels:
+    app: krakend
 spec:
+  type: ClusterIP
   ports:
     - port: 8080
       targetPort: 8080
+      name: http
   selector:
     app: krakend
-  type: ClusterIP
