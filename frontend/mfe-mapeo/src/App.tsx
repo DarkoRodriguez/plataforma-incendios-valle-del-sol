@@ -305,6 +305,11 @@ function App() {
                     >
                       Desactivar
                     </button>
+                    <button onClick={() => {
+                      throw new Error("¡Test de error en React + Vite!");
+                    }}>
+                      Romper Aplicación
+                    </button>
                   </div>
                 </div>
 

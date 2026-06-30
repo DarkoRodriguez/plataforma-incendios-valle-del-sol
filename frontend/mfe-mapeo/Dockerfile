@@ -13,7 +13,7 @@ ENV VITE_API_BASE=${VITE_API_BASE}
 # Copy package.json and package-lock.json first to leverage Docker cache
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
-
+RUN npm install @sentry/react --legacy-peer-deps
 # Copy the rest of the application
 COPY . .
 

@@ -33,6 +33,11 @@ export default function Login() {
         </div>
         {error && <div className="alert alert-danger">{error}</div>}
         <button className="btn btn-primary" type="submit">Ingresar</button>
+        <button onClick={() => {
+          throw new Error("¡Test de error en React + Vite!");
+        }}>
+          Romper Aplicación
+        </button>
       </form>
     </div>
   );

@@ -37,6 +37,12 @@ vapid:
 springdoc:
   api-docs:
     path: /api/alerts/v3/api-docs
+sentry:
+  dsn: "https://372b3e52c2094891a1a698db8e96247b@app.glitchtip.com/25287"
+  traces-sample-rate: 1.0
+  logging:
+    minimum-event-level: info       # Registra INFO, WARN y ERROR como alertas individuales
+    minimum-breadcrumb-level: debug
 
 security:
   jwt:
